@@ -231,9 +231,34 @@ async function onUnitChange(){
     LASTMEAS.forEach((r,i)=>{const m=mById(r.metric_id);h+='<div class="lastrow"><div class="mn">'+esc(m.name||r.metric_id)+'</div><div class="tg">'+(r.target_value??'—')+' '+esc(m.uom||'')+'</div><input type="number" class="last-act" data-mid="'+r.metric_id+'" placeholder="실적" value="'+(r.actual_value??'')+'"></div>';});
     $('lastMetrics').innerHTML=h;
   }
-  // 이번주 목표: 고정/유동 자동 로드
+  // 이번주 목표: 이미 저장한 값이 있으면 그걸, 없으면 고정/유동 자동 로드
+  const {data:twMeas}=await sb.from('measurements').select('metric_id,target_value').eq('unit_id',u).eq('grain','week').eq('period_key',THISWEEK);
   const {data:um}=await sb.from('unit_metrics').select('metric_id,tier').eq('unit_id',u).eq('active',true).is('effective_to',null);
-  buildThisMetrics((um||[]).map(x=>x.metric_id));
+  if(twMeas&&twMeas.length){
+    buildThisMetrics(twMeas.map(x=>x.metric_id));
+    const sels=[...document.querySelectorAll('.tw-sel')],tgts=[...document.querySelectorAll('.tw-tgt')];
+    sels.forEach((s,i)=>{const row=twMeas.find(x=>x.metric_id===s.value);if(row&&tgts[i])tgts[i].value=(row.target_value??'');});
+  }else{
+    buildThisMetrics((um||[]).map(x=>x.metric_id));
+  }
+  // 서술형: 이번주에 이미 저장한 답이 있으면 복원
+  await restoreReview(u);
+}
+
+async function restoreReview(u){
+  const fields=['top_priority','one_line_summary','result_comment','miss_reason','biggest_problem','problem_cause','reflection','done_text','plan_text','delegation_text','support_text','decision_text'];
+  const setV=(id,v)=>{const el=$(id);if(el)el.value=(v==null?'':v);};
+  let rev=null;
+  if(SESSION){const{data}=await sb.from('weekly_reviews').select('*').eq('user_id',SESSION.user.id).eq('unit_id',u).eq('iso_week',THISWEEK).maybeSingle();rev=data;}
+  if(rev){
+    fields.forEach(f=>setV(f,rev[f]));
+    if($('condition'))$('condition').value=(rev.condition!=null?rev.condition:'');
+    fmsg('이번 주에 이미 저장한 내용을 불러왔어요. 이어서 수정하고 다시 제출하면 돼요.','ok');
+  }else{
+    fields.forEach(f=>setV(f,''));
+    if($('condition'))$('condition').value='';
+    fmsg('');
+  }
 }
 
 function metricOptions(sel){return '<option value="">— 지표 선택 —</option>'+METRICS.map(m=>'<option value="'+m.id+'" data-uom="'+esc(m.uom)+'"'+(m.id===sel?' selected':'')+'>'+esc(m.name)+' ('+esc(m.uom)+')</option>').join('');}
