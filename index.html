@@ -239,7 +239,9 @@ async function onUnitChange(){
     const sels=[...document.querySelectorAll('.tw-sel')],tgts=[...document.querySelectorAll('.tw-tgt')];
     sels.forEach((s,i)=>{const row=twMeas.find(x=>x.metric_id===s.value);if(row&&tgts[i])tgts[i].value=(row.target_value??'');});
   }else{
-    buildThisMetrics((um||[]).map(x=>x.metric_id));
+    // 아직 이번주 저장 전: 지난주 목표 지표를 초기값으로 이어옴(연속성), 없으면 고정·유동 지표
+    const carry=(LASTMEAS&&LASTMEAS.length)?LASTMEAS.map(x=>x.metric_id):(um||[]).map(x=>x.metric_id);
+    buildThisMetrics(carry);
   }
   // 서술형: 이번주에 이미 저장한 답이 있으면 복원
   await restoreReview(u);
