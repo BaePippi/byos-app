@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BY OS — 주간경영 운영체제</title>
+<style>
+  :root{
+    --canvas:#F5F5F3;--card:#FFFFFF;--ink:#1D1D1F;--ink2:#6E6E73;--ink3:#A1A1A6;
+    --line:rgba(0,0,0,0.08);--line2:rgba(0,0,0,0.05);
+    --green:#2E7D5B;--green-bg:#EAF3EE;--blue:#2F6FB0;--amber:#B7791F;--red:#C0392B;--red-bg:#FBEBE9;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Pretendard',sans-serif;
+    background:var(--canvas);color:var(--ink);line-height:1.5;letter-spacing:-0.011em;-webkit-font-smoothing:antialiased;padding-bottom:70px}
+  .wrap{max-width:1000px;margin:0 auto;padding:0 24px}
+  .topbar{position:sticky;top:0;z-index:40;background:rgba(245,245,243,.72);
+    backdrop-filter:saturate(180%) blur(20px);-webkit-backdrop-filter:saturate(180%) blur(20px);border-bottom:1px solid var(--line)}
+  .topbar .row{display:flex;align-items:center;gap:10px;height:58px}
+  .brand{font-weight:700;font-size:17px;letter-spacing:-0.02em;display:flex;align-items:center;gap:9px}
+  .brand .dot{width:22px;height:22px;border-radius:7px;background:var(--ink);color:#fff;display:grid;place-items:center;font-size:12px;font-weight:800}
+  .live{margin-left:auto;font-size:12px;font-weight:600;padding:5px 11px;border-radius:99px;display:inline-flex;align-items:center;gap:6px;
+    color:var(--ink3);background:rgba(0,0,0,.05);border:1px solid var(--line)}
+  .live.on{color:var(--green);background:var(--green-bg);border-color:#cfe6d9}
+  .live .d{width:7px;height:7px;border-radius:50%;background:currentColor}
+  .hero{padding:38px 0 18px}
+  .eyebrow{font-size:12px;font-weight:650;letter-spacing:.04em;text-transform:uppercase;color:var(--green)}
+  h1{font-size:29px;font-weight:700;letter-spacing:-0.03em;margin-top:9px}
+  .sub{color:var(--ink2);font-size:15px;margin-top:9px;max-width:620px}
+  .tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:20px}
+  .tile{background:var(--card);border:1px solid var(--line);border-radius:15px;padding:20px;box-shadow:0 1px 2px rgba(0,0,0,.03),0 8px 22px rgba(0,0,0,.035)}
+  .tile .k{font-size:12.5px;color:var(--ink2);font-weight:550}
+  .tile .v{font-size:30px;font-weight:700;letter-spacing:-0.03em;margin-top:8px}
+  .tile .v small{font-size:14px;font-weight:600;color:var(--ink3)}
+  .sec{margin-top:30px}
+  .sh{font-size:13px;font-weight:700;letter-spacing:.02em;color:var(--ink2);text-transform:uppercase;margin-bottom:14px}
+  .brands{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .bcard{background:var(--card);border:1px solid var(--line);border-radius:15px;padding:20px;box-shadow:0 1px 2px rgba(0,0,0,.03)}
+  .bcard .bn{font-size:16px;font-weight:700;display:flex;align-items:center;gap:9px}
+  .bcard .bn .badge{font-size:11px;font-weight:600;color:var(--ink3);background:rgba(0,0,0,.05);border-radius:99px;padding:2px 9px}
+  .stores{margin-top:12px;display:flex;flex-wrap:wrap;gap:7px}
+  .store{font-size:13px;font-weight:550;background:#f7f7f5;border:1px solid var(--line);border-radius:8px;padding:6px 11px}
+  .divs{display:flex;flex-wrap:wrap;gap:8px}
+  .dchip{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:10px 14px;font-size:13.5px;font-weight:600;display:flex;align-items:center;gap:8px}
+  .dchip .t{font-size:11px;color:var(--ink3);font-weight:500}
+  .mcats{display:grid;grid-template-columns:repeat(5,1fr);gap:12px}
+  .mcat{background:var(--card);border:1px solid var(--line);border-radius:13px;padding:16px}
+  .mcat .cn{font-size:13px;font-weight:700;display:flex;align-items:center;gap:7px}
+  .mcat .cdot{width:9px;height:9px;border-radius:50%}
+  .mcat .cc{font-size:24px;font-weight:700;margin-top:8px}
+  .mcat .cc small{font-size:12px;color:var(--ink3);font-weight:600}
+  .foot{text-align:center;color:var(--ink3);font-size:12.5px;padding:40px 0 0;line-height:1.7}
+  .err{background:var(--red-bg);border:1px solid #f2c8c3;color:#8a2a22;border-radius:12px;padding:16px;font-size:14px;margin-top:20px}
+  .skel{color:var(--ink3);font-size:14px;padding:30px 0}
+  @media(max-width:820px){.tiles,.mcats{grid-template-columns:1fr 1fr}.brands{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+  <div class="topbar"><div class="wrap row">
+    <div class="brand"><span class="dot">BY</span> BY OS</div>
+    <span class="live" id="live"><span class="d"></span> 연결 중…</span>
+  </div></div>
+
+  <div class="wrap">
+    <div class="hero">
+      <div class="eyebrow">BY Partners · 주간경영 운영체제</div>
+      <h1>안녕하세요, 배소영 대표님.</h1>
+      <p class="sub">실제 데이터베이스에서 조직 구조와 지표를 실시간으로 불러왔어요. 아래는 전부 라이브 데이터예요.</p>
+    </div>
+    <div id="content"><div class="skel">데이터 불러오는 중…</div></div>
+    <div class="foot">BY OS · Supabase 실시간 연결 · P0 첫 배포<br>다음 단계: 로그인 · 주간 입력폼 · 대시보드</div>
+  </div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+const SUPABASE_URL = 'https://avcywcutbuxsdkjraltu.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_66xOyxIoNK_AZz0SZ8wknw_UMy5xKCR';
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+const CATS = [['revenue','매출·영업','#2E7D5B'],['cost','비용·리스크','#C0392B'],['people','사람·관계','#2F6FB0'],['growth','성장·신규','#6B5BA6'],['task','업무·실행','#B7791F']];
+const esc = s => (s==null?'':String(s)).replace(/&/g,'&amp;').replace(/</g,'&lt;');
+
+async function load(){
+  try{
+    const [{data:brands,error:be},{data:units,error:ue},{data:metrics,error:me}] = await Promise.all([
+      sb.from('brands').select('*').eq('active',true).order('id'),
+      sb.from('units').select('*').eq('active',true).order('id'),
+      sb.from('metrics').select('id,category').eq('active',true),
+    ]);
+    if(be||ue||me) throw (be||ue||me);
+    document.getElementById('live').classList.add('on');
+    document.getElementById('live').innerHTML = '<span class="d"></span> 실시간 DB 연결됨';
+
+    const stores = units.filter(u=>u.type==='fnb');
+    const divisions = units.filter(u=>u.type==='division');
+    const byBrand = id => stores.filter(u=>u.brand_id===id);
+    const mcount = c => metrics.filter(m=>m.category===c).length;
+
+    let h = '';
+    h += '<div class="tiles">'
+      + tile('브랜드', brands.length, '개')
+      + tile('매장 · 사업부', units.length, '개')
+      + tile('관리 지표', metrics.length, '개')
+      + '</div>';
+
+    h += '<div class="sec"><div class="sh">F&amp;B 브랜드</div><div class="brands">';
+    brands.forEach(b=>{
+      h += '<div class="bcard"><div class="bn">'+esc(b.name)+'<span class="badge">'+byBrand(b.id).length+'개 매장</span></div><div class="stores">'
+        + byBrand(b.id).map(s=>'<span class="store">'+esc(s.store_name||s.name)+'</span>').join('')
+        + '</div></div>';
+    });
+    h += '</div></div>';
+
+    h += '<div class="sec"><div class="sh">사업부</div><div class="divs">';
+    divisions.forEach(d=>{ h += '<div class="dchip">'+esc(d.name)+'<span class="t">'+esc(d.id)+'</span></div>'; });
+    h += '</div></div>';
+
+    h += '<div class="sec"><div class="sh">지표 카탈로그 (영역별)</div><div class="mcats">';
+    CATS.forEach(c=>{ h += '<div class="mcat"><div class="cn"><span class="cdot" style="background:'+c[2]+'"></span>'+c[1]+'</div><div class="cc">'+mcount(c[0])+'<small> 개</small></div></div>'; });
+    h += '</div></div>';
+
+    document.getElementById('content').innerHTML = h;
+  }catch(e){
+    document.getElementById('content').innerHTML = '<div class="err">데이터를 불러오지 못했어요: '+esc(e.message||e)+'</div>';
+  }
+}
+function tile(k,v,u){ return '<div class="tile"><div class="k">'+k+'</div><div class="v">'+v+'<small> '+u+'</small></div></div>'; }
+load();
+</script>
+</body>
+</html>
