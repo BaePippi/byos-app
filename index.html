@@ -8,14 +8,12 @@
   :root{
     --canvas:#F5F5F3;--card:#FFFFFF;--ink:#1D1D1F;--ink2:#6E6E73;--ink3:#A1A1A6;
     --line:rgba(0,0,0,0.08);--line2:rgba(0,0,0,0.05);
-    --green:#2E7D5B;--green-bg:#EAF3EE;--blue:#2F6FB0;--amber:#B7791F;--red:#C0392B;--red-bg:#FBEBE9;
+    --green:#2E7D5B;--green-bg:#EAF3EE;--blue:#2F6FB0;--blue-bg:#E7F0F9;--amber:#B7791F;--amber-bg:#FBF1DE;--red:#C0392B;--red-bg:#FBEBE9;--violet:#6B5BA6;
   }
   *{box-sizing:border-box;margin:0;padding:0}
-  body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Pretendard',sans-serif;
-    background:var(--canvas);color:var(--ink);line-height:1.5;letter-spacing:-0.011em;-webkit-font-smoothing:antialiased;padding-bottom:70px}
+  body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Pretendard',sans-serif;background:var(--canvas);color:var(--ink);line-height:1.5;letter-spacing:-0.011em;-webkit-font-smoothing:antialiased;padding-bottom:70px}
   .wrap{max-width:1000px;margin:0 auto;padding:0 24px}
-  .topbar{position:sticky;top:0;z-index:40;background:rgba(245,245,243,.72);
-    backdrop-filter:saturate(180%) blur(20px);-webkit-backdrop-filter:saturate(180%) blur(20px);border-bottom:1px solid var(--line)}
+  .topbar{position:sticky;top:0;z-index:40;background:rgba(245,245,243,.72);backdrop-filter:saturate(180%) blur(20px);-webkit-backdrop-filter:saturate(180%) blur(20px);border-bottom:1px solid var(--line)}
   .topbar .row{display:flex;align-items:center;gap:10px;height:58px}
   .brand{font-weight:700;font-size:17px;letter-spacing:-0.02em;display:flex;align-items:center;gap:9px}
   .brand .dot{width:22px;height:22px;border-radius:7px;background:var(--ink);color:#fff;display:grid;place-items:center;font-size:12px;font-weight:800}
@@ -27,7 +25,6 @@
   .live .d{width:7px;height:7px;border-radius:50%;background:currentColor}
   .uemail{font-size:13px;color:var(--ink2);font-weight:550}
   .logout{font:inherit;font-size:12.5px;font-weight:600;color:var(--ink2);background:#fff;border:1px solid var(--line);border-radius:8px;padding:6px 12px;cursor:pointer}
-  .logout:hover{background:#f4f4f2}
 
   .authwrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}
   .authcard{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:36px 32px;width:100%;max-width:400px;box-shadow:0 1px 2px rgba(0,0,0,.03),0 20px 50px rgba(0,0,0,.06)}
@@ -37,11 +34,10 @@
   .authcard .as{font-size:14px;color:var(--ink2);margin-top:6px}
   .field{margin-top:16px}
   .field label{font-size:13px;font-weight:600;color:var(--ink2);display:block;margin-bottom:7px}
-  .field input,.field select{width:100%;font:inherit;font-size:15px;padding:12px 14px;border:1px solid var(--line);border-radius:11px;outline:none;background:#fbfbfa}
-  .field input:focus,.field select:focus{border-color:var(--ink);background:#fff}
-  .abtn{width:100%;margin-top:22px;background:var(--ink);color:#fff;border:0;border-radius:12px;padding:14px;font:inherit;font-size:15px;font-weight:600;cursor:pointer;transition:.15s}
-  .abtn:hover{background:#333}
-  .abtn:disabled{opacity:.5;cursor:default}
+  .field input{width:100%;font:inherit;font-size:15px;padding:12px 14px;border:1px solid var(--line);border-radius:11px;outline:none;background:#fbfbfa}
+  .field input:focus{border-color:var(--ink);background:#fff}
+  .abtn{width:100%;margin-top:22px;background:var(--ink);color:#fff;border:0;border-radius:12px;padding:14px;font:inherit;font-size:15px;font-weight:600;cursor:pointer}
+  .abtn:disabled{opacity:.5}
   .toggle{text-align:center;margin-top:18px;font-size:13.5px;color:var(--ink2)}
   .toggle a{color:var(--green);font-weight:600;cursor:pointer}
   .amsg{margin-top:16px;font-size:13px;border-radius:10px;padding:11px 13px;line-height:1.5;display:none}
@@ -49,21 +45,18 @@
   .amsg.ok{display:block;background:var(--green-bg);border:1px solid #cfe6d9;color:#20603f}
 
   #app{display:none}
-  .view{display:none}
-  .view.on{display:block}
-  .hero{padding:32px 0 14px}
+  .view{display:none}.view.on{display:block}
+  .hero{padding:30px 0 12px}
   .eyebrow{font-size:12px;font-weight:650;letter-spacing:.04em;text-transform:uppercase;color:var(--green)}
-  h1{font-size:26px;font-weight:700;letter-spacing:-0.03em;margin-top:9px}
-  .sub{color:var(--ink2);font-size:15px;margin-top:9px;max-width:620px}
-  .tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:18px}
+  h1{font-size:25px;font-weight:700;letter-spacing:-0.03em;margin-top:8px}
+  .sub{color:var(--ink2);font-size:15px;margin-top:8px;max-width:640px}
+  .tiles{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:16px}
   .tile{background:var(--card);border:1px solid var(--line);border-radius:15px;padding:20px;box-shadow:0 1px 2px rgba(0,0,0,.03),0 8px 22px rgba(0,0,0,.035)}
-  .tile .k{font-size:12.5px;color:var(--ink2);font-weight:550}
-  .tile .v{font-size:30px;font-weight:700;letter-spacing:-0.03em;margin-top:8px}
-  .tile .v small{font-size:14px;font-weight:600;color:var(--ink3)}
-  .sec{margin-top:26px}
-  .sh{font-size:13px;font-weight:700;letter-spacing:.02em;color:var(--ink2);text-transform:uppercase;margin-bottom:14px}
+  .tile .k{font-size:12.5px;color:var(--ink2);font-weight:550}.tile .v{font-size:30px;font-weight:700;letter-spacing:-0.03em;margin-top:8px}.tile .v small{font-size:14px;font-weight:600;color:var(--ink3)}
+  .sec{margin-top:24px}
+  .sh{font-size:13px;font-weight:700;letter-spacing:.02em;color:var(--ink2);text-transform:uppercase;margin-bottom:12px}
   .brands{display:grid;grid-template-columns:1fr 1fr;gap:14px}
-  .bcard{background:var(--card);border:1px solid var(--line);border-radius:15px;padding:20px;box-shadow:0 1px 2px rgba(0,0,0,.03)}
+  .bcard{background:var(--card);border:1px solid var(--line);border-radius:15px;padding:20px}
   .bcard .bn{font-size:16px;font-weight:700;display:flex;align-items:center;gap:9px}
   .bcard .bn .badge{font-size:11px;font-weight:600;color:var(--ink3);background:rgba(0,0,0,.05);border-radius:99px;padding:2px 9px}
   .stores{margin-top:12px;display:flex;flex-wrap:wrap;gap:7px}
@@ -73,48 +66,50 @@
   .dchip .t{font-size:11px;color:var(--ink3);font-weight:500}
 
   /* form */
-  .formcard{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:24px;box-shadow:0 1px 2px rgba(0,0,0,.03),0 8px 22px rgba(0,0,0,.035);max-width:640px}
-  .frow{margin-bottom:18px}
-  .frow label{font-size:13px;font-weight:600;color:var(--ink2);display:block;margin-bottom:7px}
-  .frow input,.frow select,.frow textarea{width:100%;font:inherit;font-size:15px;padding:11px 13px;border:1px solid var(--line);border-radius:11px;outline:none;background:#fbfbfa}
+  .fcard{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:22px 24px;box-shadow:0 1px 2px rgba(0,0,0,.03),0 8px 22px rgba(0,0,0,.035);margin-bottom:16px;max-width:680px}
+  .fcard .ft{font-size:15px;font-weight:700;display:flex;align-items:center;gap:8px;margin-bottom:4px}
+  .fcard .fdesc{font-size:12.5px;color:var(--ink3);margin-bottom:16px}
+  .opt{font-size:11px;font-weight:600;color:var(--ink3);background:rgba(0,0,0,.05);border-radius:99px;padding:2px 8px;margin-left:6px}
+  .core{font-size:11px;font-weight:700;color:var(--red);background:var(--red-bg);border-radius:99px;padding:2px 8px;margin-left:6px}
+  .frow{margin-bottom:14px}
+  .frow label{font-size:13px;font-weight:600;color:var(--ink2);display:block;margin-bottom:6px}
+  .frow input,.frow select,.frow textarea{width:100%;font:inherit;font-size:14.5px;padding:11px 13px;border:1px solid var(--line);border-radius:10px;outline:none;background:#fbfbfa}
+  .frow textarea{min-height:64px;resize:vertical;line-height:1.5}
   .frow input:focus,.frow select:focus,.frow textarea:focus{border-color:var(--ink);background:#fff}
-  .metricrow{display:grid;grid-template-columns:1.4fr 1fr 1fr;gap:10px;align-items:end;margin-bottom:11px}
-  .metricrow .mm{font-size:11px;color:var(--ink3);margin-bottom:5px;font-weight:600;text-transform:uppercase;letter-spacing:.03em}
-  .with-uom{position:relative}
-  .with-uom .u{position:absolute;right:12px;top:50%;transform:translateY(-50%);font-size:12px;color:var(--ink3);font-weight:600;pointer-events:none}
-  .divider{height:1px;background:var(--line2);margin:20px 0}
-  .subit{width:100%;background:var(--ink);color:#fff;border:0;border-radius:12px;padding:15px;font:inherit;font-size:15px;font-weight:600;cursor:pointer;margin-top:4px}
-  .subit:disabled{opacity:.5;cursor:default}
-  .fmsg{margin-top:16px;font-size:14px;border-radius:11px;padding:14px 16px;line-height:1.55;display:none}
+  .mhead{display:grid;grid-template-columns:1.5fr 1fr 1fr;gap:9px;font-size:11px;color:var(--ink3);font-weight:600;text-transform:uppercase;letter-spacing:.03em;margin-bottom:6px;padding:0 2px}
+  .mrow{display:grid;grid-template-columns:1.5fr 1fr 1fr;gap:9px;margin-bottom:9px;align-items:center}
+  .lastrow{display:grid;grid-template-columns:1.5fr 1fr 1fr;gap:9px;margin-bottom:9px;align-items:center}
+  .lastrow .mn{font-size:14px;font-weight:600}
+  .lastrow .tg{font-size:13px;color:var(--ink2);text-align:center}
+  .empty{font-size:13.5px;color:var(--ink3);background:#faf9f7;border:1px dashed var(--line);border-radius:10px;padding:14px;line-height:1.5}
+  .subit{width:100%;max-width:680px;background:var(--ink);color:#fff;border:0;border-radius:12px;padding:15px;font:inherit;font-size:15px;font-weight:600;cursor:pointer}
+  .subit:disabled{opacity:.5}
+  .fmsg{max-width:680px;margin-top:14px;font-size:14px;border-radius:11px;padding:14px 16px;line-height:1.55;display:none}
   .fmsg.err{display:block;background:var(--red-bg);border:1px solid #f2c8c3;color:#8a2a22}
   .fmsg.ok{display:block;background:var(--green-bg);border:1px solid #cfe6d9;color:#20603f}
-  .saved{margin-top:18px;display:none}
+  .saved{max-width:680px;margin-top:16px;display:none}
   .saved table{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden}
   .saved th{text-align:left;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;color:var(--ink3);padding:11px 14px;background:#fafaf9;border-bottom:1px solid var(--line)}
-  .saved td{padding:11px 14px;border-bottom:1px solid var(--line2);font-size:14px}
-  .saved tr:last-child td{border-bottom:0}
-  .pct{font-weight:700}
+  .saved td{padding:11px 14px;border-bottom:1px solid var(--line2);font-size:14px}.saved tr:last-child td{border-bottom:0}.pct{font-weight:700}
   .foot{text-align:center;color:var(--ink3);font-size:12.5px;padding:40px 0 0;line-height:1.7}
   .err{background:var(--red-bg);border:1px solid #f2c8c3;color:#8a2a22;border-radius:12px;padding:16px;font-size:14px;margin-top:20px}
-  @media(max-width:820px){.tiles{grid-template-columns:1fr}.brands{grid-template-columns:1fr}.metricrow{grid-template-columns:1fr}}
+  @media(max-width:820px){.tiles{grid-template-columns:1fr}.brands{grid-template-columns:1fr}.mrow,.lastrow,.mhead{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
-  <!-- 로그인 -->
   <div class="authwrap" id="auth">
     <div class="authcard">
       <div class="logo"><span class="dot">BY</span> BY OS</div>
       <h2 id="authTitle">로그인</h2>
       <div class="as" id="authSub">주간경영 운영체제에 오신 걸 환영해요.</div>
-      <div class="field"><label>이메일</label><input type="email" id="email" placeholder="you@example.com" autocomplete="email"></div>
-      <div class="field"><label>비밀번호</label><input type="password" id="password" placeholder="••••••••" autocomplete="current-password"></div>
+      <div class="field"><label>이메일</label><input type="email" id="email" placeholder="you@example.com"></div>
+      <div class="field"><label>비밀번호</label><input type="password" id="password" placeholder="••••••••"></div>
       <div class="amsg" id="amsg"></div>
       <button class="abtn" id="authBtn">로그인</button>
       <div class="toggle" id="toggle">처음이신가요? <a id="toggleLink">계정 만들기</a></div>
     </div>
   </div>
 
-  <!-- 앱 -->
   <div id="app">
     <div class="topbar"><div class="wrap row">
       <div class="brand"><span class="dot">BY</span> BY OS</div>
@@ -130,200 +125,167 @@
     </div></div>
 
     <div class="wrap">
-      <!-- 현황 -->
       <div class="view on" id="view-home">
-        <div class="hero">
-          <div class="eyebrow">BY Partners · 주간경영 운영체제</div>
-          <h1 id="greet">안녕하세요.</h1>
-          <p class="sub">실제 데이터베이스에서 조직 구조와 지표를 실시간으로 불러왔어요.</p>
-        </div>
+        <div class="hero"><div class="eyebrow">BY Partners · 주간경영 운영체제</div><h1>안녕하세요.</h1><p class="sub">실제 데이터베이스에서 조직 구조와 지표를 실시간으로 불러왔어요.</p></div>
         <div id="content"></div>
       </div>
 
-      <!-- 주간 입력 -->
       <div class="view" id="view-input">
-        <div class="hero">
-          <div class="eyebrow" id="weekLabel">이번 주 입력</div>
-          <h1>주간 지표 입력</h1>
-          <p class="sub">매장을 고르고, 이번 주 핵심지표의 목표·실적을 넣어주세요. 저장하면 실제 DB에 쌓여요.</p>
+        <div class="hero"><div class="eyebrow" id="weekLabel">주간 입력</div><h1>주간 리뷰 입력</h1><p class="sub">지난주 실적을 보고하고, 이번 주 목표와 계획을 세워요. 저장하면 실제 DB에 쌓여 추세와 코칭의 재료가 됩니다.</p></div>
+
+        <div class="fcard">
+          <div class="ft">매장 · 사업부 선택</div>
+          <div class="frow" style="margin-bottom:0"><select id="fUnit" onchange="onUnitChange()"></select></div>
         </div>
-        <div class="formcard">
-          <div class="frow">
-            <label>매장 / 사업부</label>
-            <select id="fUnit"></select>
-          </div>
-          <div class="frow">
-            <label>핵심지표 (최대 3개 · 필요한 만큼만)</label>
-            <div class="metricrow" style="margin-bottom:6px"><div class="mm">지표</div><div class="mm">목표</div><div class="mm">실적</div></div>
-            <div id="metricRows"></div>
-          </div>
-          <div class="divider"></div>
-          <div class="frow"><label>이번 주 최우선 1가지</label><input type="text" id="fPriority" placeholder="이번 주 딱 하나, 반드시 할 것"></div>
-          <div class="frow"><label>이번 주 사업 상태 한 문장 (선택)</label><input type="text" id="fSummary" placeholder="한 줄로 요약하면?"></div>
-          <div class="frow"><label>컨디션 (선택)</label>
-            <select id="fCondition"><option value="">선택 안 함</option><option value="5">5 · 아주 좋음</option><option value="4">4 · 좋음</option><option value="3">3 · 보통</option><option value="2">2 · 나쁨</option><option value="1">1 · 아주 나쁨</option></select>
-          </div>
-          <div class="fmsg" id="fmsg"></div>
-          <button class="subit" id="submitBtn">이번 주 기록 저장</button>
-          <div class="saved" id="saved"></div>
+
+        <div class="fcard">
+          <div class="ft">① 지난주 실적 <span id="lwLabel" style="font-size:12px;color:var(--ink3);font-weight:500;margin-left:6px"></span></div>
+          <div class="fdesc">지난주에 세운 목표의 실제 결과를 적어주세요. 이걸로 지난주 달성률이 확정돼요.</div>
+          <div id="lastMetrics"></div>
         </div>
+
+        <div class="fcard">
+          <div class="ft">② 지난주 돌아보기 <span class="opt">선택</span></div>
+          <div class="fdesc">비워도 되지만, 적을수록 코칭이 날카로워져요.</div>
+          <div class="frow"><label>목표 대비 결과 한 줄 평</label><input type="text" id="result_comment" placeholder="지난주를 한 줄로 평가하면?"></div>
+          <div class="frow"><label>지난주 실제 실행한 일 (3개 이내)</label><textarea id="done_text" placeholder="1. …&#10;2. …"></textarea></div>
+          <div class="frow"><label>목표를 못 이뤘다면, 가장 큰 이유는?</label><input type="text" id="miss_reason" placeholder="미달 이유"></div>
+          <div class="frow"><label>현재 가장 큰 문제 1가지</label><input type="text" id="biggest_problem" placeholder="가장 큰 문제"></div>
+          <div class="frow"><label>그 문제가 생긴 원인은?</label><textarea id="problem_cause" placeholder="원인"></textarea></div>
+        </div>
+
+        <div class="fcard">
+          <div class="ft">③ 이번 주 목표</div>
+          <div class="fdesc">고정 지표는 자동으로 불러왔어요. 필요하면 유동 지표를 더하거나 바꾸세요.</div>
+          <div class="mhead"><div>지표</div><div>목표 수치</div><div></div></div>
+          <div id="thisMetrics"></div>
+        </div>
+
+        <div class="fcard">
+          <div class="ft">④ 이번 주 계획</div>
+          <div class="frow"><label>이번 주 최우선 1가지 <span class="core">필수</span></label><input type="text" id="top_priority" placeholder="이번 주 딱 하나, 반드시 할 것"></div>
+          <div class="frow"><label>이번 주 무엇을 실행할 예정? <span class="opt">선택</span></label><textarea id="plan_text" placeholder="실행 계획"></textarea></div>
+          <div class="frow"><label>누군가에게 지시·요청한 일 <span class="opt">선택</span></label><input type="text" id="delegation_text" placeholder="위임한 일 (담당·기한)"></div>
+          <div class="frow"><label>지원이 필요한 사항 <span class="opt">선택</span></label><input type="text" id="support_text" placeholder="필요한 지원"></div>
+          <div class="frow"><label>대표의 결정이 필요한 사항 <span class="opt">선택</span></label><input type="text" id="decision_text" placeholder="결정이 필요한 안건"></div>
+        </div>
+
+        <div class="fcard">
+          <div class="ft">⑤ 성찰 · 요약 <span class="opt">선택</span></div>
+          <div class="frow"><label>내 돈 100%로 운영하는 사업이라면, 이번 주 뭘 다르게 했을까?</label><textarea id="reflection" placeholder="성찰"></textarea></div>
+          <div class="frow"><label>이번 주 사업 상태를 한 문장으로</label><input type="text" id="one_line_summary" placeholder="한 줄 요약"></div>
+          <div class="frow" style="margin-bottom:0"><label>컨디션</label><select id="condition"><option value="">선택 안 함</option><option value="5">5 · 아주 좋음</option><option value="4">4 · 좋음</option><option value="3">3 · 보통</option><option value="2">2 · 나쁨</option><option value="1">1 · 아주 나쁨</option></select></div>
+        </div>
+
+        <div class="fmsg" id="fmsg"></div>
+        <button class="subit" id="submitBtn">이번 주 리뷰 저장</button>
+        <div class="saved" id="saved"></div>
       </div>
 
-      <div class="foot">BY OS · Supabase 실시간 연결 · 로그인 + 주간 입력 버전<br>다음 단계: 추이 대시보드 · AI 코칭</div>
+      <div class="foot">BY OS · Supabase 실시간 연결 · 로그인 + 풀버전 주간 입력<br>다음 단계: 추이·달성률 대시보드 · AI 코칭</div>
     </div>
   </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-const SUPABASE_URL = 'https://avcywcutbuxsdkjraltu.supabase.co';
-const SUPABASE_KEY = 'sb_publishable_66xOyxIoNK_AZz0SZ8wknw_UMy5xKCR';
-const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+const SUPABASE_URL='https://avcywcutbuxsdkjraltu.supabase.co';
+const SUPABASE_KEY='sb_publishable_66xOyxIoNK_AZz0SZ8wknw_UMy5xKCR';
+const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+let mode='login',UNITS=[],METRICS=[],SESSION=null,LASTMEAS=[];
+const $=id=>document.getElementById(id);
+const esc=s=>(s==null?'':String(s)).replace(/&/g,'&amp;').replace(/</g,'&lt;');
+function isoWeek(d){d=new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate()));const day=d.getUTCDay()||7;d.setUTCDate(d.getUTCDate()+4-day);const ys=new Date(Date.UTC(d.getUTCFullYear(),0,1));const wk=Math.ceil((((d-ys)/86400000)+1)/7);return d.getUTCFullYear()+'-W'+String(wk).padStart(2,'0');}
+const THISWEEK=isoWeek(new Date());
+const LASTWEEK=isoWeek(new Date(Date.now()-7*86400000));
+const mById=id=>METRICS.find(m=>m.id===id)||{};
 
-let mode='login', UNITS=[], METRICS=[], SESSION=null;
-const $ = id => document.getElementById(id);
-const esc = s => (s==null?'':String(s)).replace(/&/g,'&amp;').replace(/</g,'&lt;');
+/* 로그인 */
+function setMode(m){mode=m;$('authTitle').textContent=m==='login'?'로그인':'계정 만들기';$('authSub').textContent=m==='login'?'주간경영 운영체제에 오신 걸 환영해요.':'이메일과 비밀번호로 계정을 만들어요.';$('authBtn').textContent=m==='login'?'로그인':'계정 만들기';$('toggle').innerHTML=m==='login'?'처음이신가요? <a id="toggleLink">계정 만들기</a>':'이미 계정이 있으세요? <a id="toggleLink">로그인</a>';$('toggleLink').onclick=()=>setMode(m==='login'?'signup':'login');amsg('');}
+function amsg(t,k){const e=$('amsg');e.className='amsg'+(k?(' '+k):'');e.textContent=t||'';}
+$('authBtn').onclick=async()=>{const email=$('email').value.trim(),password=$('password').value;if(!email||!password){amsg('이메일과 비밀번호를 입력해주세요.','err');return;}if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){amsg('올바른 이메일 형식이 아니에요. (예: name@example.com)','err');return;}if(mode==='signup'&&password.length<6){amsg('비밀번호는 6자 이상이어야 해요.','err');return;}$('authBtn').disabled=true;try{if(mode==='login'){const{error}=await sb.auth.signInWithPassword({email,password});if(error)throw error;}else{const{data,error}=await sb.auth.signUp({email,password});if(error)throw error;if(!data.session){amsg('가입 확인 메일을 보냈어요.','ok');$('authBtn').disabled=false;return;}}}catch(e){amsg(tr(e.message||String(e)),'err');$('authBtn').disabled=false;}};
+$('logoutBtn').onclick=async()=>{await sb.auth.signOut();};
+function tr(m){if(/Invalid login/i.test(m))return '이메일 또는 비밀번호가 맞지 않아요.';if(/already registered/i.test(m))return '이미 가입된 이메일이에요. 로그인해주세요.';return m;}
 
-// ISO 주차 (예: 2026-W30)
-function isoWeek(d){
-  d = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
-  const day = d.getUTCDay() || 7; d.setUTCDate(d.getUTCDate() + 4 - day);
-  const ys = new Date(Date.UTC(d.getUTCFullYear(),0,1));
-  const wk = Math.ceil((((d - ys)/86400000)+1)/7);
-  return d.getUTCFullYear()+'-W'+String(wk).padStart(2,'0');
-}
-const THISWEEK = isoWeek(new Date());
+function setView(v){['home','input'].forEach(x=>{$('view-'+x).classList.toggle('on',v===x);$('tab-'+x).classList.toggle('on',v===x);});window.scrollTo({top:0,behavior:'smooth'});}
 
-/* ---------- 로그인 ---------- */
-function setMode(m){
-  mode=m;
-  $('authTitle').textContent = m==='login'?'로그인':'계정 만들기';
-  $('authSub').textContent = m==='login'?'주간경영 운영체제에 오신 걸 환영해요.':'이메일과 비밀번호로 계정을 만들어요.';
-  $('authBtn').textContent = m==='login'?'로그인':'계정 만들기';
-  $('toggle').innerHTML = m==='login'?'처음이신가요? <a id="toggleLink">계정 만들기</a>':'이미 계정이 있으세요? <a id="toggleLink">로그인</a>';
-  $('toggleLink').onclick = () => setMode(m==='login'?'signup':'login'); amsg('');
-}
-function amsg(t,k){ const e=$('amsg'); e.className='amsg'+(k?(' '+k):''); e.textContent=t||''; }
-$('authBtn').onclick = async () => {
-  const email=$('email').value.trim(), password=$('password').value;
-  if(!email||!password){ amsg('이메일과 비밀번호를 입력해주세요.','err'); return; }
-  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){ amsg('올바른 이메일 형식이 아니에요. (예: name@example.com)','err'); return; }
-  if(mode==='signup' && password.length<6){ amsg('비밀번호는 6자 이상이어야 해요.','err'); return; }
-  $('authBtn').disabled=true;
-  try{
-    if(mode==='login'){ const {error}=await sb.auth.signInWithPassword({email,password}); if(error) throw error; }
-    else{ const {data,error}=await sb.auth.signUp({email,password}); if(error) throw error;
-      if(!data.session){ amsg('가입 확인 메일을 보냈어요. 메일 링크를 눌러주세요.','ok'); $('authBtn').disabled=false; return; } }
-  }catch(e){ amsg(tr(e.message||String(e)),'err'); $('authBtn').disabled=false; }
-};
-$('logoutBtn').onclick = async () => { await sb.auth.signOut(); };
-function tr(m){ if(/Invalid login/i.test(m))return '이메일 또는 비밀번호가 맞지 않아요.'; if(/already registered/i.test(m))return '이미 가입된 이메일이에요. 로그인해주세요.'; if(/6 char/i.test(m))return '비밀번호는 6자 이상이어야 해요.'; return m; }
+sb.auth.onAuthStateChange((_e,s)=>render(s));
+async function render(session){SESSION=session;if(session){$('auth').style.display='none';$('app').style.display='block';$('uemail').textContent=session.user.email;$('authBtn').disabled=false;$('weekLabel').textContent=THISWEEK+' 입력';await loadData();renderOverview();buildUnitSelect();await onUnitChange();}else{$('app').style.display='none';$('auth').style.display='flex';}}
 
-/* ---------- 뷰 전환 ---------- */
-function setView(v){
-  ['home','input'].forEach(x=>{ $('view-'+x).classList.toggle('on',v===x); $('tab-'+x).classList.toggle('on',v===x); });
-  window.scrollTo({top:0,behavior:'smooth'});
-}
+async function loadData(){const[{data:u},{data:m}]=await Promise.all([sb.from('units').select('*').eq('active',true).order('id'),sb.from('metrics').select('id,name,uom,category').eq('active',true).order('category')]);UNITS=u||[];METRICS=m||[];}
 
-/* ---------- 세션 ---------- */
-sb.auth.onAuthStateChange((_e,session)=>render(session));
-async function render(session){
-  SESSION=session;
-  if(session){
-    $('auth').style.display='none'; $('app').style.display='block';
-    $('uemail').textContent=session.user.email; $('authBtn').disabled=false;
-    $('weekLabel').textContent = THISWEEK.replace('-',' · ')+' 입력';
-    await loadData();
-    renderOverview(); buildForm();
-  }else{ $('app').style.display='none'; $('auth').style.display='flex'; }
-}
+async function renderOverview(){try{const{data:brands}=await sb.from('brands').select('*').eq('active',true).order('id');const stores=UNITS.filter(u=>u.type==='fnb'),divisions=UNITS.filter(u=>u.type==='division'),byBrand=id=>stores.filter(u=>u.brand_id===id);let h='<div class="tiles">'+tile('브랜드',(brands||[]).length,'개')+tile('매장 · 사업부',UNITS.length,'개')+tile('관리 지표',METRICS.length,'개')+'</div>';h+='<div class="sec"><div class="sh">F&amp;B 브랜드</div><div class="brands">';(brands||[]).forEach(b=>{h+='<div class="bcard"><div class="bn">'+esc(b.name)+'<span class="badge">'+byBrand(b.id).length+'개 매장</span></div><div class="stores">'+byBrand(b.id).map(s=>'<span class="store">'+esc(s.store_name||s.name)+'</span>').join('')+'</div></div>';});h+='</div></div>';h+='<div class="sec"><div class="sh">사업부</div><div class="divs">'+divisions.map(d=>'<div class="dchip">'+esc(d.name)+'<span class="t">'+esc(d.id)+'</span></div>').join('')+'</div></div>';$('content').innerHTML=h;}catch(e){$('content').innerHTML='<div class="err">불러오기 실패: '+esc(e.message||e)+'</div>';}}
+function tile(k,v,u){return '<div class="tile"><div class="k">'+k+'</div><div class="v">'+v+'<small> '+u+'</small></div></div>';}
 
-async function loadData(){
-  const [{data:units},{data:metrics}] = await Promise.all([
-    sb.from('units').select('*').eq('active',true).order('id'),
-    sb.from('metrics').select('id,name,uom,category').eq('active',true).order('category'),
-  ]);
-  UNITS=units||[]; METRICS=metrics||[];
-}
+function buildUnitSelect(){$('fUnit').innerHTML=UNITS.map(u=>'<option value="'+u.id+'">'+esc(u.name)+'</option>').join('');}
 
-/* ---------- 현황 ---------- */
-async function renderOverview(){
-  try{
-    const {data:brands} = await sb.from('brands').select('*').eq('active',true).order('id');
-    const stores=UNITS.filter(u=>u.type==='fnb'), divisions=UNITS.filter(u=>u.type==='division');
-    const byBrand=id=>stores.filter(u=>u.brand_id===id);
-    let h='<div class="tiles">'+tile('브랜드',(brands||[]).length,'개')+tile('매장 · 사업부',UNITS.length,'개')+tile('관리 지표',METRICS.length,'개')+'</div>';
-    h+='<div class="sec"><div class="sh">F&amp;B 브랜드</div><div class="brands">';
-    (brands||[]).forEach(b=>{ h+='<div class="bcard"><div class="bn">'+esc(b.name)+'<span class="badge">'+byBrand(b.id).length+'개 매장</span></div><div class="stores">'+byBrand(b.id).map(s=>'<span class="store">'+esc(s.store_name||s.name)+'</span>').join('')+'</div></div>'; });
-    h+='</div></div>';
-    h+='<div class="sec"><div class="sh">사업부</div><div class="divs">'+divisions.map(d=>'<div class="dchip">'+esc(d.name)+'<span class="t">'+esc(d.id)+'</span></div>').join('')+'</div></div>';
-    $('content').innerHTML=h;
-  }catch(e){ $('content').innerHTML='<div class="err">데이터를 불러오지 못했어요: '+esc(e.message||e)+'</div>'; }
-}
-function tile(k,v,u){ return '<div class="tile"><div class="k">'+k+'</div><div class="v">'+v+'<small> '+u+'</small></div></div>'; }
-
-/* ---------- 입력폼 ---------- */
-function buildForm(){
-  $('fUnit').innerHTML = UNITS.map(u=>'<option value="'+u.id+'">'+esc(u.name)+'</option>').join('');
-  const opts = '<option value="">— 지표 선택 —</option>'+METRICS.map(m=>'<option value="'+m.id+'" data-uom="'+esc(m.uom)+'">'+esc(m.name)+' ('+esc(m.uom)+')</option>').join('');
-  let rows='';
-  for(let i=0;i<3;i++){
-    rows+='<div class="metricrow">'
-      +'<select class="m-sel" data-i="'+i+'" onchange="uomSync('+i+')">'+opts+'</select>'
-      +'<div class="with-uom"><input type="number" class="m-tgt" placeholder="목표"><span class="u" id="u-'+i+'"></span></div>'
-      +'<div class="with-uom"><input type="number" class="m-act" placeholder="실적"><span class="u" id="ua-'+i+'"></span></div>'
-      +'</div>';
+async function onUnitChange(){
+  const u=$('fUnit').value; if(!u) return;
+  $('lwLabel').textContent='('+LASTWEEK+')';
+  // 지난주 측정값
+  const {data:last}=await sb.from('measurements').select('metric_id,target_value,actual_value').eq('unit_id',u).eq('grain','week').eq('period_key',LASTWEEK);
+  LASTMEAS=last||[];
+  if(LASTMEAS.length===0){
+    $('lastMetrics').innerHTML='<div class="empty">지난주 입력이 없어요. 이번 주는 목표 설정부터 시작하면 돼요. (다음 주부터 실적 보고가 생겨요.)</div>';
+  }else{
+    let h='<div class="mhead"><div>지표</div><div>지난주 목표</div><div>실제 결과</div></div>';
+    LASTMEAS.forEach((r,i)=>{const m=mById(r.metric_id);h+='<div class="lastrow"><div class="mn">'+esc(m.name||r.metric_id)+'</div><div class="tg">'+(r.target_value??'—')+' '+esc(m.uom||'')+'</div><input type="number" class="last-act" data-mid="'+r.metric_id+'" placeholder="실적" value="'+(r.actual_value??'')+'"></div>';});
+    $('lastMetrics').innerHTML=h;
   }
-  $('metricRows').innerHTML=rows;
+  // 이번주 목표: 고정/유동 자동 로드
+  const {data:um}=await sb.from('unit_metrics').select('metric_id,tier').eq('unit_id',u).eq('active',true).is('effective_to',null);
+  buildThisMetrics((um||[]).map(x=>x.metric_id));
 }
-function uomSync(i){
-  const sel=document.querySelectorAll('.m-sel')[i];
-  const uom=sel.options[sel.selectedIndex].getAttribute('data-uom')||'';
-  $('u-'+i).textContent=uom; $('ua-'+i).textContent=uom;
-}
-function fmsg(t,k){ const e=$('fmsg'); e.className='fmsg'+(k?(' '+k):''); e.textContent=t||''; }
 
-$('submitBtn').onclick = async () => {
+function metricOptions(sel){return '<option value="">— 지표 선택 —</option>'+METRICS.map(m=>'<option value="'+m.id+'" data-uom="'+esc(m.uom)+'"'+(m.id===sel?' selected':'')+'>'+esc(m.name)+' ('+esc(m.uom)+')</option>').join('');}
+function buildThisMetrics(preset){
+  const ids=preset.slice(0,3); while(ids.length<3) ids.push('');
+  $('thisMetrics').innerHTML=ids.map((id,i)=>'<div class="mrow"><select class="tw-sel">'+metricOptions(id)+'</select><div style="position:relative"><input type="number" class="tw-tgt" placeholder="목표"></div><div></div></div>').join('');
+}
+
+function fmsg(t,k){const e=$('fmsg');e.className='fmsg'+(k?(' '+k):'');e.textContent=t||'';}
+
+$('submitBtn').onclick=async()=>{
   const unit_id=$('fUnit').value;
-  const priority=$('fPriority').value.trim();
-  const summary=$('fSummary').value.trim();
-  const condition=$('fCondition').value ? parseInt($('fCondition').value) : null;
-  const sels=[...document.querySelectorAll('.m-sel')], tgts=[...document.querySelectorAll('.m-tgt')], acts=[...document.querySelectorAll('.m-act')];
-  const rows=[];
-  sels.forEach((s,i)=>{ if(s.value){ rows.push({ metric_id:s.value, target: tgts[i].value===''?null:parseFloat(tgts[i].value), actual: acts[i].value===''?null:parseFloat(acts[i].value) }); } });
-  if(rows.length===0){ fmsg('지표를 최소 1개는 선택해주세요.','err'); return; }
-  const dup = rows.map(r=>r.metric_id); if(new Set(dup).size!==dup.length){ fmsg('같은 지표를 두 번 골랐어요. 다른 지표로 바꿔주세요.','err'); return; }
-  $('submitBtn').disabled=true; fmsg('저장 중…');
+  const gv=id=>{const el=$(id);return el&&el.value.trim()?el.value.trim():null;};
+  const top_priority=gv('top_priority');
+  if(!top_priority){fmsg('"이번 주 최우선 1가지"는 필수예요.','err');window.scrollTo({top:document.body.scrollHeight,behavior:'smooth'});return;}
+  // 이번주 목표 수집
+  const sels=[...document.querySelectorAll('.tw-sel')],tgts=[...document.querySelectorAll('.tw-tgt')];
+  const twRows=[];sels.forEach((s,i)=>{if(s.value)twRows.push({metric_id:s.value,target:tgts[i].value===''?null:parseFloat(tgts[i].value)});});
+  if(twRows.length===0){fmsg('이번 주 목표 지표를 최소 1개는 선택해주세요.','err');return;}
+  const ids=twRows.map(r=>r.metric_id);if(new Set(ids).size!==ids.length){fmsg('이번 주 목표에 같은 지표가 중복됐어요.','err');return;}
+  // 지난주 실적 수집
+  const lastActs=[...document.querySelectorAll('.last-act')].map(el=>({metric_id:el.getAttribute('data-mid'),actual:el.value===''?null:parseFloat(el.value)})).filter(x=>x.actual!==null);
+  $('submitBtn').disabled=true;fmsg('저장 중…');
   try{
-    const { data:review, error:re } = await sb.from('weekly_reviews')
-      .upsert({ user_id:SESSION.user.id, unit_id, iso_week:THISWEEK, top_priority:priority||null, one_line_summary:summary||null, condition, status:'submitted', submitted_at:new Date().toISOString() },
-              { onConflict:'user_id,unit_id,iso_week' }).select().single();
-    if(re) throw re;
-    const mrows = rows.map(r=>({ unit_id, metric_id:r.metric_id, grain:'week', period_key:THISWEEK, target_value:r.target, actual_value:r.actual, source_review_id:review.id }));
-    const { error:me } = await sb.from('measurements').upsert(mrows, { onConflict:'unit_id,metric_id,grain,period_key' });
-    if(me) throw me;
-    fmsg('저장됐어요! 아래에서 방금 저장된 값을 확인하세요.','ok');
+    const review={user_id:SESSION.user.id,unit_id,iso_week:THISWEEK,status:'submitted',submitted_at:new Date().toISOString(),
+      top_priority,one_line_summary:gv('one_line_summary'),result_comment:gv('result_comment'),miss_reason:gv('miss_reason'),
+      biggest_problem:gv('biggest_problem'),problem_cause:gv('problem_cause'),reflection:gv('reflection'),
+      done_text:gv('done_text'),plan_text:gv('plan_text'),delegation_text:gv('delegation_text'),support_text:gv('support_text'),decision_text:gv('decision_text'),
+      condition:$('condition').value?parseInt($('condition').value):null};
+    const {data:rev,error:re}=await sb.from('weekly_reviews').upsert(review,{onConflict:'user_id,unit_id,iso_week'}).select().single();
+    if(re)throw re;
+    // 이번주 목표 저장
+    const mrows=twRows.map(r=>({unit_id,metric_id:r.metric_id,grain:'week',period_key:THISWEEK,target_value:r.target,source_review_id:rev.id}));
+    const {error:me}=await sb.from('measurements').upsert(mrows,{onConflict:'unit_id,metric_id,grain,period_key'});
+    if(me)throw me;
+    // 지난주 실적 업데이트
+    for(const la of lastActs){await sb.from('measurements').update({actual_value:la.actual}).eq('unit_id',unit_id).eq('metric_id',la.metric_id).eq('grain','week').eq('period_key',LASTWEEK);}
+    fmsg('저장됐어요! 이번 주 목표와 지난주 실적이 DB에 쌓였어요.','ok');
     await showSaved(unit_id);
-  }catch(e){ fmsg('저장 실패: '+esc(e.message||e),'err'); }
+  }catch(e){fmsg('저장 실패: '+esc(e.message||e),'err');}
   $('submitBtn').disabled=false;
 };
 
 async function showSaved(unit_id){
-  const { data } = await sb.from('measurements')
-    .select('metric_id,target_value,actual_value')
-    .eq('unit_id',unit_id).eq('grain','week').eq('period_key',THISWEEK);
-  const name = id => (METRICS.find(m=>m.id===id)||{}).name || id;
-  const uom = id => (METRICS.find(m=>m.id===id)||{}).uom || '';
-  let h='<div class="sh" style="margin-bottom:10px">저장된 이번 주 값 · '+esc(unit_id)+'</div><table><thead><tr><th>지표</th><th>목표</th><th>실적</th><th>달성률</th></tr></thead><tbody>';
-  (data||[]).forEach(r=>{
-    const pct = (r.target_value && r.actual_value!=null) ? Math.round(r.actual_value/r.target_value*1000)/10+'%' : '—';
-    h+='<tr><td>'+esc(name(r.metric_id))+'</td><td>'+(r.target_value??'—')+' '+esc(uom(r.metric_id))+'</td><td>'+(r.actual_value??'—')+' '+esc(uom(r.metric_id))+'</td><td class="pct">'+pct+'</td></tr>';
-  });
-  h+='</tbody></table>';
-  const el=$('saved'); el.innerHTML=h; el.style.display='block';
+  const {data}=await sb.from('measurements').select('metric_id,period_key,target_value,actual_value').eq('unit_id',unit_id).eq('grain','week').in('period_key',[LASTWEEK,THISWEEK]).order('period_key');
+  let h='<div class="sh" style="margin-bottom:10px">저장 확인 · '+esc(unit_id)+'</div><table><thead><tr><th>주차</th><th>지표</th><th>목표</th><th>실적</th><th>달성률</th></tr></thead><tbody>';
+  (data||[]).forEach(r=>{const m=mById(r.metric_id);const pct=(r.target_value&&r.actual_value!=null)?Math.round(r.actual_value/r.target_value*1000)/10+'%':'—';h+='<tr><td>'+esc(r.period_key)+'</td><td>'+esc(m.name||r.metric_id)+'</td><td>'+(r.target_value??'—')+' '+esc(m.uom||'')+'</td><td>'+(r.actual_value??'—')+' '+esc(m.uom||'')+'</td><td class="pct">'+pct+'</td></tr>';});
+  h+='</tbody></table>';const el=$('saved');el.innerHTML=h;el.style.display='block';el.scrollIntoView({behavior:'smooth'});
 }
 
 setMode('login');
-(async()=>{ const {data:{session}}=await sb.auth.getSession(); render(session); })();
+(async()=>{const{data:{session}}=await sb.auth.getSession();render(session);})();
 </script>
 </body>
 </html>
