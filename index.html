@@ -94,6 +94,39 @@
   .foot{text-align:center;color:var(--ink3);font-size:12.5px;padding:40px 0 0;line-height:1.7}
   .err{background:var(--red-bg);border:1px solid #f2c8c3;color:#8a2a22;border-radius:12px;padding:16px;font-size:14px;margin-top:20px}
   @media(max-width:820px){.tiles{grid-template-columns:1fr}.brands{grid-template-columns:1fr}.mrow,.lastrow,.mhead{grid-template-columns:1fr}}
+
+  /* dashboard */
+  .dbar{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px 16px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;box-shadow:0 1px 2px rgba(0,0,0,.03)}
+  .dbar .dlbl{font-size:12px;font-weight:650;color:var(--ink3);text-transform:uppercase;letter-spacing:.03em}
+  .dtog{display:inline-flex;background:rgba(0,0,0,.05);border-radius:9px;padding:3px}
+  .dtog button{border:0;background:transparent;font:inherit;font-size:13px;font-weight:600;color:var(--ink2);padding:6px 13px;border-radius:7px;cursor:pointer}
+  .dtog button.on{background:#fff;color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.06)}
+  .dbar select{font:inherit;font-size:14px;font-weight:550;padding:9px 12px;border:1px solid var(--line);border-radius:9px;background:#fbfbfa;outline:none;min-width:160px}
+  .dbar select:focus{border-color:var(--ink);background:#fff}
+  .dgrid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:16px}
+  .mcard{background:var(--card);border:1px solid var(--line);border-radius:15px;padding:18px 20px;box-shadow:0 1px 2px rgba(0,0,0,.03),0 8px 22px rgba(0,0,0,.035)}
+  .mcard .mtop{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:2px}
+  .mcard .mname{font-size:15px;font-weight:700}
+  .mcard .msub{font-size:12px;color:var(--ink3);margin-bottom:12px}
+  .ach{font-size:12px;font-weight:700;padding:3px 10px;border-radius:99px;white-space:nowrap}
+  .ach.ok{color:var(--green);background:var(--green-bg);border:1px solid #cfe6d9}
+  .ach.warn{color:var(--amber);background:var(--amber-bg);border:1px solid #eeddb8}
+  .ach.bad{color:var(--red);background:var(--red-bg);border:1px solid #f2c8c3}
+  .ach.na{color:var(--ink3);background:rgba(0,0,0,.04);border:1px solid var(--line)}
+  .mvals{display:flex;gap:18px;margin-top:12px;font-size:12.5px;color:var(--ink2)}
+  .mvals b{color:var(--ink);font-weight:700}
+  .atable{margin-top:8px;width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+  .atable th{text-align:left;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;color:var(--ink3);padding:10px 13px;background:#fafaf9;border-bottom:1px solid var(--line)}
+  .atable td{padding:10px 13px;border-bottom:1px solid var(--line2);font-size:13.5px}.atable tr:last-child td{border-bottom:0}
+  .cell-ok{color:var(--green);font-weight:700}.cell-warn{color:var(--amber);font-weight:700}.cell-bad{color:var(--red);font-weight:700}
+  .ins{display:flex;gap:12px;background:var(--card);border:1px solid var(--line);border-radius:13px;padding:15px 17px;margin-bottom:11px;box-shadow:0 1px 2px rgba(0,0,0,.03)}
+  .ins .ic{width:34px;height:34px;border-radius:10px;display:grid;place-items:center;font-size:16px;flex-shrink:0}
+  .ins.pos .ic{background:var(--green-bg)}.ins.neg .ic{background:var(--red-bg)}.ins.info .ic{background:var(--blue-bg)}.ins.warn .ic{background:var(--amber-bg)}
+  .ins .it{font-size:14px;font-weight:700;margin-bottom:2px}
+  .ins .id{font-size:13px;color:var(--ink2);line-height:1.5}
+  .badge2{display:inline-block;font-size:11px;font-weight:700;padding:2px 8px;border-radius:99px;background:rgba(0,0,0,.05);color:var(--ink2);margin-left:6px}
+  .emptybig{text-align:center;color:var(--ink3);background:#faf9f7;border:1px dashed var(--line);border-radius:14px;padding:40px 20px;font-size:14px;line-height:1.6;margin-top:16px}
+  @media(max-width:820px){.dgrid{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
@@ -115,6 +148,7 @@
       <div class="brand"><span class="dot">BY</span> BY OS</div>
       <div class="seg">
         <button id="tab-home" class="on" onclick="setView('home')">현황</button>
+        <button id="tab-dash" onclick="setView('dash')">대시보드</button>
         <button id="tab-input" onclick="setView('input')">주간 입력</button>
       </div>
       <div class="userbox">
@@ -128,6 +162,17 @@
       <div class="view on" id="view-home">
         <div class="hero"><div class="eyebrow">BY Partners · 주간경영 운영체제</div><h1>안녕하세요.</h1><p class="sub">실제 데이터베이스에서 조직 구조와 지표를 실시간으로 불러왔어요.</p></div>
         <div id="content"></div>
+      </div>
+
+      <div class="view" id="view-dash">
+        <div class="hero"><div class="eyebrow">분석 · 코칭</div><h1>대시보드</h1><p class="sub">매장·사업부별로, 또는 담당자별로 달성률과 추이를 봅니다. 쌓인 데이터에서 이번 주 액션을 뽑아줘요.</p></div>
+        <div class="dbar">
+          <span class="dlbl">보기</span>
+          <div class="dtog"><button id="dt-unit" class="on" onclick="setScope('unit')">매장·사업부별</button><button id="dt-person" onclick="setScope('person')">담당자별</button></div>
+          <span class="dlbl" style="margin-left:8px">대상</span>
+          <select id="dTarget" onchange="renderDash()"></select>
+        </div>
+        <div id="dashBody"></div>
       </div>
 
       <div class="view" id="view-input">
@@ -191,7 +236,7 @@
 const SUPABASE_URL='https://avcywcutbuxsdkjraltu.supabase.co';
 const SUPABASE_KEY='sb_publishable_66xOyxIoNK_AZz0SZ8wknw_UMy5xKCR';
 const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
-let mode='login',UNITS=[],METRICS=[],SESSION=null,LASTMEAS=[];
+let mode='login',UNITS=[],METRICS=[],SESSION=null,LASTMEAS=[],USERS=[],ASSIGNS=[],DSCOPE='unit';
 const $=id=>document.getElementById(id);
 const esc=s=>(s==null?'':String(s)).replace(/&/g,'&amp;').replace(/</g,'&lt;');
 function isoWeek(d){d=new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate()));const day=d.getUTCDay()||7;d.setUTCDate(d.getUTCDate()+4-day);const ys=new Date(Date.UTC(d.getUTCFullYear(),0,1));const wk=Math.ceil((((d-ys)/86400000)+1)/7);return d.getUTCFullYear()+'-W'+String(wk).padStart(2,'0');}
@@ -206,12 +251,14 @@ $('authBtn').onclick=async()=>{const email=$('email').value.trim(),password=$('p
 $('logoutBtn').onclick=async()=>{await sb.auth.signOut();};
 function tr(m){if(/Invalid login/i.test(m))return '이메일 또는 비밀번호가 맞지 않아요.';if(/already registered/i.test(m))return '이미 가입된 이메일이에요. 로그인해주세요.';return m;}
 
-function setView(v){['home','input'].forEach(x=>{$('view-'+x).classList.toggle('on',v===x);$('tab-'+x).classList.toggle('on',v===x);});window.scrollTo({top:0,behavior:'smooth'});}
+function setView(v){['home','dash','input'].forEach(x=>{$('view-'+x).classList.toggle('on',v===x);$('tab-'+x).classList.toggle('on',v===x);});window.scrollTo({top:0,behavior:'smooth'});if(v==='dash')renderDash();}
 
 sb.auth.onAuthStateChange((_e,s)=>render(s));
-async function render(session){SESSION=session;if(session){$('auth').style.display='none';$('app').style.display='block';$('uemail').textContent=session.user.email;$('authBtn').disabled=false;$('weekLabel').textContent=THISWEEK+' 입력';await loadData();renderOverview();buildUnitSelect();await onUnitChange();}else{$('app').style.display='none';$('auth').style.display='flex';}}
+async function render(session){SESSION=session;if(session){$('auth').style.display='none';$('app').style.display='block';$('uemail').textContent=session.user.email;$('authBtn').disabled=false;$('weekLabel').textContent=THISWEEK+' 입력';await loadData();renderOverview();buildUnitSelect();buildDashTarget();await onUnitChange();}else{$('app').style.display='none';$('auth').style.display='flex';}}
 
-async function loadData(){const[{data:u},{data:m}]=await Promise.all([sb.from('units').select('*').eq('active',true).order('id'),sb.from('metrics').select('id,name,uom,category').eq('active',true).order('category')]);UNITS=u||[];METRICS=m||[];}
+async function loadData(){const[{data:u},{data:m},{data:us},{data:asn}]=await Promise.all([sb.from('units').select('*').eq('active',true).order('id'),sb.from('metrics').select('id,name,uom,category').eq('active',true).order('category'),sb.from('users').select('id,name,email').eq('active',true),sb.from('assignments').select('user_id,unit_id')]);UNITS=u||[];METRICS=m||[];USERS=us||[];ASSIGNS=asn||[];}
+const uName=id=>{const u=(UNITS.find(x=>x.id===id));return u?(u.name||id):id;};
+const pName=id=>{const u=(USERS.find(x=>x.id===id));return u?(u.name||u.email||id):id;};
 
 async function renderOverview(){try{const{data:brands}=await sb.from('brands').select('*').eq('active',true).order('id');const stores=UNITS.filter(u=>u.type==='fnb'),divisions=UNITS.filter(u=>u.type==='division'),byBrand=id=>stores.filter(u=>u.brand_id===id);let h='<div class="tiles">'+tile('브랜드',(brands||[]).length,'개')+tile('매장 · 사업부',UNITS.length,'개')+tile('관리 지표',METRICS.length,'개')+'</div>';h+='<div class="sec"><div class="sh">F&amp;B 브랜드</div><div class="brands">';(brands||[]).forEach(b=>{h+='<div class="bcard"><div class="bn">'+esc(b.name)+'<span class="badge">'+byBrand(b.id).length+'개 매장</span></div><div class="stores">'+byBrand(b.id).map(s=>'<span class="store">'+esc(s.store_name||s.name)+'</span>').join('')+'</div></div>';});h+='</div></div>';h+='<div class="sec"><div class="sh">사업부</div><div class="divs">'+divisions.map(d=>'<div class="dchip">'+esc(d.name)+'<span class="t">'+esc(d.id)+'</span></div>').join('')+'</div></div>';$('content').innerHTML=h;}catch(e){$('content').innerHTML='<div class="err">불러오기 실패: '+esc(e.message||e)+'</div>';}}
 function tile(k,v,u){return '<div class="tile"><div class="k">'+k+'</div><div class="v">'+v+'<small> '+u+'</small></div></div>';}
@@ -310,6 +357,84 @@ async function showSaved(unit_id){
   (data||[]).forEach(r=>{const m=mById(r.metric_id);const pct=(r.target_value&&r.actual_value!=null)?Math.round(r.actual_value/r.target_value*1000)/10+'%':'—';h+='<tr><td>'+esc(r.period_key)+'</td><td>'+esc(m.name||r.metric_id)+'</td><td>'+(r.target_value??'—')+' '+esc(m.uom||'')+'</td><td>'+(r.actual_value??'—')+' '+esc(m.uom||'')+'</td><td class="pct">'+pct+'</td></tr>';});
   h+='</tbody></table>';const el=$('saved');el.innerHTML=h;el.style.display='block';el.scrollIntoView({behavior:'smooth'});
 }
+
+/* ===== 대시보드 ===== */
+function setScope(s){DSCOPE=s;$('dt-unit').classList.toggle('on',s==='unit');$('dt-person').classList.toggle('on',s==='person');buildDashTarget();renderDash();}
+function buildDashTarget(){const sel=$('dTarget');if(DSCOPE==='unit'){sel.innerHTML='<option value="ALL">전체 (매장·사업부)</option>'+UNITS.map(u=>'<option value="'+u.id+'">'+esc(u.name)+'</option>').join('');}else{sel.innerHTML=USERS.map(u=>'<option value="'+u.id+'">'+esc(u.name||u.email)+'</option>').join('');if(SESSION&&USERS.some(u=>u.id===SESSION.user.id))sel.value=SESSION.user.id;}}
+function empty(t){return '<div class="emptybig">'+esc(t)+'</div>';}
+function achPct(t,a){return (t!=null&&a!=null&&Number(t)!==0)?(Number(a)/Number(t)*100):null;}
+function achClass(p){if(p==null)return 'na';if(p>=100)return 'ok';if(p>=90)return 'warn';return 'bad';}
+function achTxt(p){if(p==null)return '—';if(p>999)return '>999%';return (Math.round(p*10)/10)+'%';}
+function avgClamped(arr){const c=arr.map(p=>Math.min(Math.max(p,0),200));return c.length?Math.round(c.reduce((a,b)=>a+b,0)/c.length):null;}
+
+async function renderDash(){
+  if(!SESSION)return;
+  const body=$('dashBody');body.innerHTML='<div class="emptybig">불러오는 중…</div>';
+  const tgt=$('dTarget').value;let unitIds=[],personId=null;
+  if(DSCOPE==='unit'){unitIds=(tgt==='ALL')?UNITS.map(u=>u.id):[tgt];}
+  else{personId=tgt;const fromAsn=ASSIGNS.filter(a=>a.user_id===tgt).map(a=>a.unit_id);const {data:wr}=await sb.from('weekly_reviews').select('unit_id').eq('user_id',tgt);unitIds=[...new Set([...fromAsn,...(wr||[]).map(r=>r.unit_id)])];}
+  if(!unitIds.length){body.innerHTML=empty('아직 연결된 매장·데이터가 없어요. 담당 배정이나 주간 입력이 쌓이면 여기에 나타나요.');return;}
+  const {data:measAll}=await sb.from('measurements').select('unit_id,metric_id,period_key,target_value,actual_value').eq('grain','week').in('unit_id',unitIds);
+  const meas=measAll||[];
+  let rq=sb.from('weekly_reviews').select('*').in('unit_id',unitIds);if(personId)rq=rq.eq('user_id',personId);
+  const {data:reviews}=await rq;const revs=reviews||[];
+  if(meas.length===0&&revs.length===0){body.innerHTML=empty('아직 이 대상의 데이터가 없어요. 주간 입력이 쌓이면 달성률·추이·코칭이 여기 표시돼요.');return;}
+  const weeks=[...new Set(meas.map(m=>m.period_key))].sort();const latestWk=weeks[weeks.length-1];
+  const latestPcts=meas.filter(m=>m.period_key===latestWk).map(m=>achPct(m.target_value,m.actual_value)).filter(v=>v!=null);
+  const avgAch=avgClamped(latestPcts);
+  const nMetrics=new Set(meas.map(m=>m.metric_id)).size;
+  let h='<div class="tiles">'+tile('최근 주 평균 달성률',avgAch==null?'—':avgAch,avgAch==null?'':'%')+tile('추적 지표',nMetrics,'개')+tile('데이터 주차',weeks.length,'주')+'</div>';
+  if(latestWk)h+='<div style="margin-top:8px;color:var(--ink3);font-size:12.5px">기준 주차: '+esc(latestWk)+'</div>';
+  if(DSCOPE==='unit'&&tgt==='ALL'){h+=leaderboard(meas);}
+  else{const byU={};meas.forEach(m=>{(byU[m.unit_id]=byU[m.unit_id]||[]).push(m);});const keys=Object.keys(byU).sort();const multi=keys.length>1;
+    if(keys.length===0)h+=empty('측정값은 아직 없지만 주간 리뷰는 쌓이고 있어요. 아래 코칭을 참고하세요.');
+    keys.forEach(uid=>{h+='<div class="sh" style="margin-top:26px">'+(multi?esc(uName(uid)):'지표별 추이')+'</div>'+metricCards(byU[uid]);h+='<div class="sh" style="margin-top:22px">주차별 달성률'+(multi?(' · '+esc(uName(uid))):'')+'</div>'+achTable(byU[uid]);});}
+  h+='<div class="sh" style="margin-top:28px">코칭 · 인사이트</div>';
+  const ins=computeInsights(meas,revs);
+  h+=ins.length?ins.map(insCard).join(''):'<div class="empty">아직 코칭할 데이터가 부족해요. 몇 주 더 쌓이면 패턴이 보여요.</div>';
+  body.innerHTML=h;
+}
+
+function metricCards(rows){const byM={};rows.forEach(r=>{(byM[r.metric_id]=byM[r.metric_id]||[]).push(r);});let h='<div class="dgrid">';
+  Object.keys(byM).forEach(mid=>{const m=mById(mid);const series=byM[mid].slice().sort((a,b)=>a.period_key<b.period_key?-1:1).map(r=>({week:r.period_key,target:r.target_value,actual:r.actual_value}));
+    const last=series[series.length-1];const p=achPct(last.target,last.actual);const cls=achClass(p);
+    h+='<div class="mcard"><div class="mtop"><div class="mname">'+esc(m.name||mid)+'</div><div class="ach '+cls+'">'+(p==null?'실적 대기':'달성 '+achTxt(p))+'</div></div><div class="msub">'+esc(m.uom||'')+' · 최근 '+series.length+'주</div>'+svgTrend(series)+'<div class="mvals"><span>목표 <b>'+(last.target==null?'—':last.target)+'</b></span><span>실적 <b>'+(last.actual==null?'—':last.actual)+'</b></span></div></div>';});
+  h+='</div>';return h;}
+
+function svgTrend(series){const w=280,h=80,pad=12;const idxX=i=>series.length===1?w/2:pad+i*(w-2*pad)/(series.length-1);
+  const vals=series.flatMap(s=>[s.target,s.actual]).filter(v=>v!=null&&!isNaN(v));if(!vals.length)return '';
+  const max=Math.max(...vals),min=Math.min(...vals,0);const yy=v=>{const t=(v-min)/((max-min)||1);return h-pad-t*(h-2*pad);};
+  const col={ok:'#2E7D5B',warn:'#B7791F',bad:'#C0392B',na:'#A1A1A6'};const last=series[series.length-1];const c=col[achClass(achPct(last.target,last.actual))];
+  const tp=series.map((s,i)=>s.target!=null?{x:idxX(i),y:yy(s.target)}:null).filter(Boolean);
+  const ap=series.map((s,i)=>s.actual!=null?{x:idxX(i),y:yy(s.actual)}:null).filter(Boolean);
+  let s='<svg viewBox="0 0 '+w+' '+h+'" style="width:100%;height:auto;display:block;margin:6px 0 2px">';
+  if(tp.length>1)s+='<polyline points="'+tp.map(p=>p.x+','+p.y).join(' ')+'" fill="none" stroke="#c7c7cd" stroke-width="1.5" stroke-dasharray="4 4"/>';
+  else if(tp.length===1)s+='<line x1="'+pad+'" y1="'+tp[0].y+'" x2="'+(w-pad)+'" y2="'+tp[0].y+'" stroke="#c7c7cd" stroke-width="1.5" stroke-dasharray="4 4"/>';
+  if(ap.length>1)s+='<polyline points="'+ap.map(p=>p.x+','+p.y).join(' ')+'" fill="none" stroke="'+c+'" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>';
+  ap.forEach(p=>{s+='<circle cx="'+p.x+'" cy="'+p.y+'" r="3.2" fill="'+c+'"/>';});
+  return s+'</svg>';}
+
+function achTable(rows){const weeks=[...new Set(rows.map(r=>r.period_key))].sort();const metrics=[...new Set(rows.map(r=>r.metric_id))];
+  const get=(w,mid)=>rows.find(r=>r.period_key===w&&r.metric_id===mid);
+  let h='<table class="atable"><thead><tr><th>주차</th>'+metrics.map(mid=>'<th>'+esc(mById(mid).name||mid)+'</th>').join('')+'</tr></thead><tbody>';
+  weeks.forEach(w=>{h+='<tr><td style="font-weight:600">'+esc(w)+'</td>';metrics.forEach(mid=>{const r=get(w,mid);const p=r?achPct(r.target_value,r.actual_value):null;const cls=p==null?'':('cell-'+(p>=100?'ok':p>=90?'warn':'bad'));h+='<td class="'+cls+'">'+(r?((r.actual_value==null?'—':r.actual_value)+' / '+(r.target_value==null?'—':r.target_value)+(p!=null?' · '+achTxt(p):'')):'—')+'</td>';});h+='</tr>';});
+  return h+'</tbody></table>';}
+
+function leaderboard(meas){const byU={};meas.forEach(m=>{(byU[m.unit_id]=byU[m.unit_id]||[]).push(m);});
+  const rows=Object.keys(byU).map(uid=>{const rs=byU[uid];const wks=[...new Set(rs.map(r=>r.period_key))].sort();const lw=wks[wks.length-1];const lp=rs.filter(r=>r.period_key===lw).map(r=>achPct(r.target_value,r.actual_value)).filter(v=>v!=null);const avg=avgClamped(lp);return {uid,lw,avg,n:new Set(rs.map(r=>r.metric_id)).size,weeks:wks.length};}).sort((a,b)=>(b.avg==null?-1:b.avg)-(a.avg==null?-1:a.avg));
+  let h='<div class="sh" style="margin-top:24px">매장·사업부 달성 현황</div><table class="atable"><thead><tr><th>매장·사업부</th><th>최근 주</th><th>평균 달성률</th><th>지표</th><th>데이터</th></tr></thead><tbody>';
+  rows.forEach(r=>{const cls=r.avg==null?'':('cell-'+(r.avg>=100?'ok':r.avg>=90?'warn':'bad'));h+='<tr><td style="font-weight:600">'+esc(uName(r.uid))+'</td><td>'+esc(r.lw||'—')+'</td><td class="'+cls+'">'+(r.avg==null?'—':achTxt(r.avg))+'</td><td>'+r.n+'개</td><td>'+r.weeks+'주</td></tr>';});
+  return h+'</tbody></table>';}
+
+function computeInsights(meas,reviews){const out=[];const byUM={};meas.forEach(m=>{const k=m.unit_id+'|'+m.metric_id;(byUM[k]=byUM[k]||[]).push(m);});
+  Object.values(byUM).forEach(rs=>{rs.sort((a,b)=>a.period_key<b.period_key?-1:1);const last=rs[rs.length-1];const p=achPct(last.target_value,last.actual_value);const nm=mById(last.metric_id).name||last.metric_id;const un=uName(last.unit_id);
+    if(p!=null&&p<90){let streak=0;for(let i=rs.length-1;i>=0;i--){const q=achPct(rs[i].target_value,rs[i].actual_value);if(q!=null&&q<100)streak++;else break;}out.push({type:'neg',icon:'▼',title:un+' · '+nm+' 목표 미달',desc:'최근 주 달성률 '+achTxt(p)+(streak>1?(' · '+streak+'주 연속 목표 미달'):'')+'. 원인 점검이 필요해요.'});}
+    else if(p!=null&&p>=100){out.push({type:'pos',icon:'▲',title:un+' · '+nm+' 목표 달성',desc:'달성률 '+achTxt(p)+'. 이 흐름을 유지할 방법을 기록해두세요.'});}
+    if(rs.length>=2){const a=rs[rs.length-2].actual_value,b=last.actual_value;if(a!=null&&b!=null){if(b>a)out.push({type:'info',icon:'↗',title:un+' · '+nm+' 상승세',desc:'실적이 '+a+' → '+b+'로 올랐어요.'});else if(b<a)out.push({type:'warn',icon:'↘',title:un+' · '+nm+' 하락세',desc:'실적이 '+a+' → '+b+'로 내렸어요. 확인이 필요해요.'});}}});
+  const latestRev={};reviews.forEach(r=>{const k=r.unit_id;if(!latestRev[k]||r.iso_week>latestRev[k].iso_week)latestRev[k]=r;});
+  Object.values(latestRev).forEach(r=>{if(r.biggest_problem)out.push({type:'warn',icon:'!',title:uName(r.unit_id)+' · 가장 큰 문제',desc:r.biggest_problem+(r.problem_cause?(' (원인: '+r.problem_cause+')'):'')});if(r.top_priority)out.push({type:'info',icon:'★',title:uName(r.unit_id)+' · 이번 주 최우선',desc:r.top_priority});});
+  const order={neg:0,warn:1,pos:2,info:3};out.sort((a,b)=>order[a.type]-order[b.type]);return out.slice(0,8);}
+function insCard(x){return '<div class="ins '+x.type+'"><div class="ic">'+esc(x.icon)+'</div><div><div class="it">'+esc(x.title)+'</div><div class="id">'+esc(x.desc)+'</div></div></div>';}
 
 setMode('login');
 (async()=>{const{data:{session}}=await sb.auth.getSession();render(session);})();
