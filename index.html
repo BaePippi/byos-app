@@ -2,8 +2,23 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>BY OS — 주간경영 운영체제</title>
+<meta name="theme-color" content="#1D1D1F">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="BY OS">
+<script>
+(function(){try{
+  var svg="<svg xmlns='http://www.w3.org/2000/svg' width='512' height='512'><rect width='512' height='512' rx='112' fill='%231D1D1F'/><text x='256' y='330' font-family='-apple-system,Arial,sans-serif' font-size='240' font-weight='800' fill='white' text-anchor='middle'>BY</text></svg>";
+  var icon="data:image/svg+xml,"+svg;
+  var mani={name:"BY OS",short_name:"BY OS",display:"standalone",background_color:"#F5F5F3",theme_color:"#1D1D1F",start_url:"./",icons:[{src:icon,sizes:"512x512",type:"image/svg+xml"},{src:icon,sizes:"192x192",type:"image/svg+xml"}]};
+  var blob=new Blob([JSON.stringify(mani)],{type:"application/manifest+json"});
+  var l=document.createElement('link');l.rel='manifest';l.href=URL.createObjectURL(blob);document.head.appendChild(l);
+  var al=document.createElement('link');al.rel='apple-touch-icon';al.href=icon;document.head.appendChild(al);
+}catch(e){}})();
+</script>
 <style>
   :root{
     --canvas:#F5F5F3;--card:#FFFFFF;--ink:#1D1D1F;--ink2:#6E6E73;--ink3:#A1A1A6;
@@ -173,7 +188,35 @@
   .tk-grouplbl{font-size:11px;font-weight:700;color:var(--ink3);text-transform:uppercase;letter-spacing:.02em;margin:8px 0 4px}
   .trow input,.trow select{width:100%;font:inherit;font-size:14px;padding:9px 11px;border:1px solid var(--line);border-radius:9px;background:#fbfbfa;outline:none}
   .trow input:focus,.trow select:focus{border-color:var(--ink);background:#fff}
-  @media(max-width:820px){.dgrid{grid-template-columns:1fr}.coach-row{flex-direction:column;gap:2px}.coach-lbl{width:auto}.trow{grid-template-columns:1fr!important}.tkitem{flex-wrap:wrap}}
+  /* 일간 홈 (모바일 우선) */
+  .dailywrap{max-width:520px}
+  .daily-card{max-width:520px}
+  .dyhead{display:flex;gap:12px;margin-bottom:16px}
+  .dybig{margin-bottom:14px}
+  .dybig label,.dygrid2 label,.daily-card .frow label{font-size:13px;font-weight:600;color:var(--ink2);display:block;margin-bottom:7px}
+  .dyu{font-size:11px;font-weight:600;color:var(--ink3)}
+  .dybig input{width:100%;font:inherit;font-size:26px;font-weight:700;letter-spacing:-0.02em;padding:16px 16px;border:1px solid var(--line);border-radius:13px;background:#fbfbfa;outline:none;font-variant-numeric:tabular-nums}
+  .dybig input:focus{border-color:var(--ink);background:#fff}
+  .dygrid2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px}
+  .dygrid2 input{width:100%;font:inherit;font-size:20px;font-weight:700;padding:13px 14px;border:1px solid var(--line);border-radius:12px;background:#fbfbfa;outline:none;font-variant-numeric:tabular-nums}
+  .dygrid2 input:focus{border-color:var(--ink);background:#fff}
+  .dybtn{margin-top:6px;padding:17px}
+  .dyweekcard{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px 20px;margin-top:16px;box-shadow:0 1px 2px rgba(0,0,0,.03),0 8px 22px rgba(0,0,0,.035)}
+  .dyweek-h{font-size:14px;font-weight:700;margin-bottom:4px;display:flex;justify-content:space-between;align-items:baseline}
+  .dyweek-sub{font-size:12px;color:var(--ink3);font-weight:550}
+  .dyprog{height:8px;border-radius:99px;background:#eee;overflow:hidden;margin:12px 0 6px}
+  .dyprog>i{display:block;height:100%;border-radius:99px;background:var(--green)}
+  .dyprog.warn>i{background:var(--amber)}.dyprog.bad>i{background:var(--red)}
+  .dysum{display:flex;gap:16px;font-size:12.5px;color:var(--ink2);margin-bottom:14px}
+  .dysum b{color:var(--ink);font-weight:700;font-variant-numeric:tabular-nums}
+  .dybars{display:flex;gap:6px;align-items:flex-end;height:76px;margin-top:6px}
+  .dybar{flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;height:100%;justify-content:flex-end}
+  .dybar .bar{width:70%;min-height:3px;background:#d8e6df;border-radius:5px 5px 0 0}
+  .dybar.today .bar{background:var(--green)}
+  .dybar.has .bar{background:#a9cfbd}
+  .dybar .dl{font-size:10.5px;color:var(--ink3);font-weight:600}
+  .dybar.today .dl{color:var(--green)}
+  @media(max-width:820px){.dgrid{grid-template-columns:1fr}.coach-row{flex-direction:column;gap:2px}.coach-lbl{width:auto}.trow{grid-template-columns:1fr!important}.tkitem{flex-wrap:wrap}.dyhead{flex-direction:column;gap:0}.dyhead .frow{width:100%!important}}
 </style>
 </head>
 <body>
@@ -194,6 +237,7 @@
     <div class="topbar"><div class="wrap row">
       <div class="brand"><span class="dot">BY</span> BY OS</div>
       <div class="seg">
+        <button id="tab-daily" onclick="setView('daily')">오늘</button>
         <button id="tab-home" class="on" onclick="setView('home')">현황</button>
         <button id="tab-dash" onclick="setView('dash')">대시보드</button>
         <button id="tab-input" onclick="setView('input')">주간 입력</button>
@@ -206,6 +250,28 @@
     </div></div>
 
     <div class="wrap">
+      <div class="view" id="view-daily">
+        <div class="hero"><div class="eyebrow">매일 · 빠른 입력</div><h1>오늘</h1><p class="sub">현장에서 매출·객수·이슈만 몇 초에. 이번 주 목표에 자동으로 쌓여요.</p></div>
+        <div class="dailywrap">
+          <div class="fcard daily-card">
+            <div class="dyhead">
+              <div class="frow" style="margin-bottom:0;flex:1"><label>매장</label><select id="dyUnit" onchange="onDailyUnit()"></select></div>
+              <div class="frow" style="margin-bottom:0;width:150px"><label>날짜</label><input type="date" id="dyDate" onchange="loadDaily()"></div>
+            </div>
+            <div class="dybig"><label>매출 <span class="dyu">원</span></label><input type="number" inputmode="numeric" id="dySales" placeholder="오늘 매출"></div>
+            <div class="dygrid2">
+              <div><label>객수 <span class="dyu">명</span></label><input type="number" inputmode="numeric" id="dyCust" placeholder="0"></div>
+              <div><label>신규 <span class="dyu">명</span></label><input type="number" inputmode="numeric" id="dyNew" placeholder="0"></div>
+            </div>
+            <div class="frow"><label>오늘 이슈 <span class="opt">선택</span></label><input type="text" id="dyIssue" placeholder="한 줄로 (없으면 비워도 됨)"></div>
+            <div class="frow" style="margin-bottom:0"><label>컨디션 <span class="opt">선택</span></label><select id="dyCond"><option value="">선택 안 함</option><option value="5">5 · 아주 좋음</option><option value="4">4 · 좋음</option><option value="3">3 · 보통</option><option value="2">2 · 나쁨</option><option value="1">1 · 아주 나쁨</option></select></div>
+            <button class="subit dybtn" id="dySave">오늘 저장</button>
+            <div class="fmsg" id="dyMsg"></div>
+          </div>
+          <div id="dyWeek"></div>
+        </div>
+      </div>
+
       <div class="view on" id="view-home">
         <div class="hero"><div class="eyebrow">BY Partners · 주간경영 운영체제</div><h1>안녕하세요.</h1><p class="sub">실제 데이터베이스에서 조직 구조와 지표를 실시간으로 불러왔어요.</p></div>
         <div id="content"></div>
@@ -307,10 +373,10 @@ $('authBtn').onclick=async()=>{const email=$('email').value.trim(),password=$('p
 $('logoutBtn').onclick=async()=>{await sb.auth.signOut();};
 function tr(m){if(/Invalid login/i.test(m))return '이메일 또는 비밀번호가 맞지 않아요.';if(/already registered/i.test(m))return '이미 가입된 이메일이에요. 로그인해주세요.';return m;}
 
-function setView(v){['home','dash','input'].forEach(x=>{$('view-'+x).classList.toggle('on',v===x);$('tab-'+x).classList.toggle('on',v===x);});window.scrollTo({top:0,behavior:'smooth'});if(v==='dash')renderDash();}
+function setView(v){['daily','home','dash','input'].forEach(x=>{$('view-'+x).classList.toggle('on',v===x);$('tab-'+x).classList.toggle('on',v===x);});window.scrollTo({top:0,behavior:'smooth'});if(v==='dash')renderDash();if(v==='daily')renderDaily();}
 
 sb.auth.onAuthStateChange((_e,s)=>render(s));
-async function render(session){SESSION=session;if(session){$('auth').style.display='none';$('app').style.display='block';$('uemail').textContent=session.user.email;$('authBtn').disabled=false;$('weekLabel').textContent=THISWEEK+' 입력';await loadData();renderOverview();buildUnitSelect();buildDashTarget();await onUnitChange();}else{$('app').style.display='none';$('auth').style.display='flex';}}
+async function render(session){SESSION=session;if(session){$('auth').style.display='none';$('app').style.display='block';$('uemail').textContent=session.user.email;$('authBtn').disabled=false;$('weekLabel').textContent=THISWEEK+' 입력';await loadData();renderOverview();buildUnitSelect();buildDailyUnitSelect();buildDashTarget();await onUnitChange();}else{$('app').style.display='none';$('auth').style.display='flex';}}
 
 async function loadData(){const[{data:u},{data:m},{data:us},{data:asn}]=await Promise.all([sb.from('units').select('*').eq('active',true).order('id'),sb.from('metrics').select('id,name,uom,category').eq('active',true).order('category'),sb.from('users').select('id,name,email').eq('active',true),sb.from('assignments').select('user_id,unit_id')]);UNITS=u||[];METRICS=m||[];USERS=us||[];ASSIGNS=asn||[];}
 const uName=id=>{const u=(UNITS.find(x=>x.id===id));return u?(u.name||id):id;};
@@ -384,6 +450,65 @@ function taskInputRow(t){t=t||{};return '<div class="mrow trow" style="grid-temp
 function buildTaskRows(list){const arr=(list&&list.length)?list:[null];$('taskRows').innerHTML=arr.map(taskInputRow).join('');}
 function addTaskRow(){const d=document.createElement('div');d.className='mrow trow';d.style.gridTemplateColumns='2fr 1.1fr 1fr';d.innerHTML='<input type="text" class="tk-title" placeholder="할 일"><select class="tk-asg">'+assigneeOptions('')+'</select><input type="date" class="tk-due">';$('taskRows').appendChild(d);}
 async function loadTaskInput(u){try{const{data}=await sb.from('tasks').select('title,assignee_user_id,due_date').eq('unit_id',u).eq('period_key',THISWEEK).order('created_at');buildTaskRows((data||[]).map(t=>({title:t.title,assignee_user_id:t.assignee_user_id,due_date:t.due_date})));}catch(e){buildTaskRows(null);}}
+
+/* ===== 일간 홈 ===== */
+const fmtD=x=>x.getFullYear()+'-'+String(x.getMonth()+1).padStart(2,'0')+'-'+String(x.getDate()).padStart(2,'0');
+function weekDates(ds){const d=new Date(ds+'T00:00:00');const day=(d.getDay()+6)%7;const mon=new Date(d);mon.setDate(d.getDate()-day);const out=[];for(let i=0;i<7;i++){const x=new Date(mon);x.setDate(mon.getDate()+i);out.push(fmtD(x));}return out;}
+function buildDailyUnitSelect(){const s=$('dyUnit');if(!s)return;s.innerHTML=UNITS.map(u=>'<option value="'+u.id+'">'+esc(u.name)+'</option>').join('');const mine=ASSIGNS.filter(a=>a.user_id===SESSION.user.id).map(a=>a.unit_id);if(mine.length&&UNITS.some(u=>u.id===mine[0]))s.value=mine[0];}
+function dymsg(t,k){const e=$('dyMsg');if(!e)return;e.className='fmsg'+(k?(' '+k):'');e.textContent=t||'';}
+async function renderDaily(){if(!SESSION)return;if(!$('dyUnit').options.length)buildDailyUnitSelect();if(!$('dyDate').value)$('dyDate').value=fmtD(new Date());await loadDaily();}
+function onDailyUnit(){loadDaily();}
+async function loadDaily(){
+  const u=$('dyUnit').value,d=$('dyDate').value;if(!u||!d)return;dymsg('');
+  const {data:dm}=await sb.from('measurements').select('metric_id,actual_value').eq('unit_id',u).eq('grain','day').eq('period_key',d);
+  const get=id=>{const r=(dm||[]).find(x=>x.metric_id===id);return r&&r.actual_value!=null?r.actual_value:'';};
+  $('dySales').value=get('sales');$('dyCust').value=get('total_customers');$('dyNew').value=get('new_customers');
+  const {data:note}=await sb.from('daily_notes').select('issue,condition').eq('unit_id',u).eq('log_date',d).maybeSingle();
+  $('dyIssue').value=note&&note.issue?note.issue:'';$('dyCond').value=note&&note.condition!=null?note.condition:'';
+  if(dm&&dm.length)dymsg('이 날짜에 이미 입력한 값을 불러왔어요. 수정 후 다시 저장하면 돼요.','ok');
+  await renderDayWeek(u,d);
+}
+$('dySave').onclick=async()=>{
+  const u=$('dyUnit').value,d=$('dyDate').value;if(!u||!d){dymsg('매장과 날짜를 선택해주세요.','err');return;}
+  const num=id=>{const v=$(id).value;return v===''?null:parseFloat(v);};
+  const sales=num('dySales'),cust=num('dyCust'),nw=num('dyNew');
+  if(sales==null&&cust==null&&nw==null&&!$('dyIssue').value.trim()){dymsg('매출·객수 중 하나는 입력해주세요.','err');return;}
+  $('dySave').disabled=true;dymsg('저장 중…');
+  try{
+    const rows=[];
+    if(sales!=null)rows.push({unit_id:u,metric_id:'sales',grain:'day',period_key:d,actual_value:sales});
+    if(cust!=null)rows.push({unit_id:u,metric_id:'total_customers',grain:'day',period_key:d,actual_value:cust});
+    if(nw!=null)rows.push({unit_id:u,metric_id:'new_customers',grain:'day',period_key:d,actual_value:nw});
+    if(rows.length){const {error}=await sb.from('measurements').upsert(rows,{onConflict:'unit_id,metric_id,grain,period_key'});if(error)throw error;}
+    const note={unit_id:u,log_date:d,issue:$('dyIssue').value.trim()||null,condition:$('dyCond').value?parseInt($('dyCond').value):null,created_by:SESSION.user.id,updated_at:new Date().toISOString()};
+    const {error:ne}=await sb.from('daily_notes').upsert(note,{onConflict:'unit_id,log_date'});if(ne)throw ne;
+    dymsg('저장됐어요! 이번 주 목표에 반영됐어요.','ok');
+    await renderDayWeek(u,d);
+  }catch(e){dymsg('저장 실패: '+esc(e.message||e),'err');}
+  $('dySave').disabled=false;
+};
+async function renderDayWeek(u,dateStr){
+  const el=$('dyWeek');if(!el)return;
+  const days=weekDates(dateStr);const iso=isoWeek(new Date(dateStr+'T00:00:00'));
+  const {data:dm}=await sb.from('measurements').select('metric_id,period_key,actual_value').eq('unit_id',u).eq('grain','day').in('period_key',days);
+  const {data:wkrows}=await sb.from('measurements').select('target_value').eq('unit_id',u).eq('grain','week').eq('period_key',iso).eq('metric_id','sales');
+  const target=(wkrows&&wkrows[0]&&wkrows[0].target_value!=null)?Number(wkrows[0].target_value):null;
+  const salesBy={},custBy={};
+  (dm||[]).forEach(r=>{if(r.metric_id==='sales')salesBy[r.period_key]=Number(r.actual_value);if(r.metric_id==='total_customers')custBy[r.period_key]=Number(r.actual_value);});
+  const sumS=days.reduce((a,x)=>a+(salesBy[x]||0),0),sumC=days.reduce((a,x)=>a+(custBy[x]||0),0);
+  const pct=target?Math.round(sumS/target*1000)/10:null;
+  const maxS=Math.max(1,...days.map(x=>salesBy[x]||0));
+  const won=n=>n==null?'—':(n>=10000?Math.round(n/10000).toLocaleString()+'만':n.toLocaleString());
+  const dow=['월','화','수','목','금','토','일'];
+  let bars='';days.forEach((x,i)=>{const v=salesBy[x]||0;const hp=Math.round(v/maxS*100);const isT=x===dateStr;bars+='<div class="dybar'+(isT?' today':(v>0?' has':''))+'"><div class="bar" style="height:'+(v>0?Math.max(hp,6):0)+'%"></div><div class="dl">'+dow[i]+'</div></div>';});
+  const cls=pct==null?'':(pct>=100?'':pct>=70?'warn':'bad');const at=sumC>0?Math.round(sumS/sumC):null;
+  let h='<div class="dyweekcard"><div class="dyweek-h"><span>이번 주 흐름</span><span class="dyweek-sub">'+esc(iso)+'</span></div>';
+  h+='<div class="dysum"><span>누적 매출 <b>'+won(sumS)+'원</b></span>'+(target?'<span>주간 목표 <b>'+won(target)+'원</b>'+(pct!=null?' ('+pct+'%)':'')+'</span>':'<span class="dyweek-sub">주간 목표 미설정</span>')+'</div>';
+  if(target)h+='<div class="dyprog '+cls+'"><i style="width:'+Math.min(100,pct||0)+'%"></i></div>';
+  h+='<div class="dybars">'+bars+'</div>';
+  h+='<div class="dysum" style="margin-top:12px;margin-bottom:0"><span>누적 객수 <b>'+(sumC||0)+'명</b></span>'+(at?'<span>평균 객단가 <b>'+at.toLocaleString()+'원</b></span>':'')+'</div></div>';
+  el.innerHTML=h;
+}
 
 function fmsg(t,k){const e=$('fmsg');e.className='fmsg'+(k?(' '+k):'');e.textContent=t||'';}
 
