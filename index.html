@@ -430,7 +430,7 @@ html.dark{--fill:rgba(255,255,255,.055)}
           <div class="ft">⑤ 성찰 · 요약 <span class="opt">선택</span></div>
           <div class="frow"><label>내 돈 100%로 운영하는 사업이라면, 이번 주 뭘 다르게 했을까?</label><textarea id="reflection" placeholder="성찰"></textarea></div>
           <div class="frow"><label>이번 주 사업 상태를 한 문장으로</label><input type="text" id="one_line_summary" placeholder="한 줄 요약"></div>
-          <div class="frow" style="margin-bottom:0"><label>컨디션</label><select id="condition"><option value="">선택 안 함</option><option value="5">5 · 아주 좋음</option><option value="4">4 · 좋음</option><option value="3">3 · 보통</option><option value="2">2 · 나쁨</option><option value="1">1 · 아주 나쁨</option></select></div>
+          
         </div>
 
         <div class="fmsg" id="fmsg"></div>
@@ -707,7 +707,7 @@ $('submitBtn').onclick=async()=>{
       top_priority,one_line_summary:gv('one_line_summary'),result_comment:gv('result_comment'),miss_reason:gv('miss_reason'),
       biggest_problem:gv('biggest_problem'),problem_cause:gv('problem_cause'),reflection:gv('reflection'),
       done_text:gv('done_text'),plan_text:gv('plan_text'),delegation_text:gv('delegation_text'),support_text:gv('support_text'),decision_text:gv('decision_text'),
-      condition:$('condition').value?parseInt($('condition').value):null};
+      condition:null};
     const {data:rev,error:re}=await sb.from('weekly_reviews').upsert(review,{onConflict:'user_id,unit_id,iso_week'}).select().single();
     if(re)throw re;
     // 이번주 목표 저장
