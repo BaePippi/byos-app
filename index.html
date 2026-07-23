@@ -216,6 +216,28 @@
   .dybar.has .bar{background:#a9cfbd}
   .dybar .dl{font-size:10.5px;color:var(--ink3);font-weight:600}
   .dybar.today .dl{color:var(--green)}
+  /* 지속성 훅 */
+  .dygreet{margin-bottom:14px;max-width:520px}
+  .dyg-hi{font-size:21px;font-weight:700;letter-spacing:-0.02em}
+  .dystreak{display:inline-block;margin-top:9px;font-size:13.5px;font-weight:650;color:#9a4d0f;background:#fdf1e3;border:1px solid #f4dcc0;border-radius:99px;padding:6px 13px}
+  .dystreak.zero{color:var(--ink3);background:#f4f4f2;border-color:var(--line)}
+  .dytip{display:flex;gap:10px;align-items:flex-start;background:linear-gradient(180deg,#fbfaff,#fff);border:1px solid #e4e0f0;border-left:3px solid var(--violet);border-radius:13px;padding:13px 15px;margin-bottom:14px;max-width:520px}
+  .dytip-k{flex-shrink:0;font-size:11px;font-weight:700;color:var(--violet);text-transform:uppercase;letter-spacing:.02em;padding-top:2px}
+  .dytip-v{font-size:13.5px;line-height:1.5;color:var(--ink);font-weight:550}
+  .dychips{display:flex;gap:7px;flex-wrap:wrap;margin:10px 0 2px}
+  .dychip{font-size:12px;font-weight:700;padding:4px 11px;border-radius:99px}
+  .dychip.up{color:var(--green);background:var(--green-bg);border:1px solid #cfe6d9}
+  .dychip.down{color:var(--red);background:var(--red-bg);border:1px solid #f2c8c3}
+  .dygoal{font-size:13px;color:var(--ink2);margin:10px 0 2px}.dygoal b{color:var(--ink);font-weight:700}
+  .dyceleb{animation:dypulse 1.2s ease}
+  @keyframes dypulse{0%{transform:scale(1)}28%{transform:scale(1.02)}100%{transform:scale(1)}}
+  .brief{background:linear-gradient(180deg,#1d1d1f,#2a2a2e);color:#fff;border-radius:16px;padding:18px 20px;margin-top:16px;box-shadow:0 8px 24px rgba(0,0,0,.14)}
+  .brief-hi{font-size:15px;font-weight:700;margin-bottom:12px;letter-spacing:-0.01em}
+  .brief-row{display:flex;gap:12px;padding:8px 0;border-top:1px solid rgba(255,255,255,.09);font-size:13.5px}
+  .brief-row:first-of-type{border-top:0}
+  .brief-k{flex-shrink:0;width:72px;color:rgba(255,255,255,.55);font-weight:600;font-size:12px}
+  .brief-v{color:rgba(255,255,255,.92);line-height:1.5}
+  .brief-v b{color:#ffd9a0;font-weight:700}
   @media(max-width:820px){.dgrid{grid-template-columns:1fr}.coach-row{flex-direction:column;gap:2px}.coach-lbl{width:auto}.trow{grid-template-columns:1fr!important}.tkitem{flex-wrap:wrap}.dyhead{flex-direction:column;gap:0}.dyhead .frow{width:100%!important}}
 </style>
 </head>
@@ -253,6 +275,8 @@
       <div class="view" id="view-daily">
         <div class="hero"><div class="eyebrow">매일 · 빠른 입력</div><h1>오늘</h1><p class="sub">현장에서 매출·객수·이슈만 몇 초에. 이번 주 목표에 자동으로 쌓여요.</p></div>
         <div class="dailywrap">
+          <div id="dyGreet"></div>
+          <div id="dyTip"></div>
           <div class="fcard daily-card">
             <div class="dyhead">
               <div class="frow" style="margin-bottom:0;flex:1"><label>매장</label><select id="dyUnit" onchange="onDailyUnit()"></select></div>
@@ -274,6 +298,7 @@
 
       <div class="view on" id="view-home">
         <div class="hero"><div class="eyebrow">BY Partners · 주간경영 운영체제</div><h1>안녕하세요.</h1><p class="sub">실제 데이터베이스에서 조직 구조와 지표를 실시간으로 불러왔어요.</p></div>
+        <div id="brief"></div>
         <div id="content"></div>
       </div>
 
@@ -373,10 +398,10 @@ $('authBtn').onclick=async()=>{const email=$('email').value.trim(),password=$('p
 $('logoutBtn').onclick=async()=>{await sb.auth.signOut();};
 function tr(m){if(/Invalid login/i.test(m))return '이메일 또는 비밀번호가 맞지 않아요.';if(/already registered/i.test(m))return '이미 가입된 이메일이에요. 로그인해주세요.';return m;}
 
-function setView(v){['daily','home','dash','input'].forEach(x=>{$('view-'+x).classList.toggle('on',v===x);$('tab-'+x).classList.toggle('on',v===x);});window.scrollTo({top:0,behavior:'smooth'});if(v==='dash')renderDash();if(v==='daily')renderDaily();}
+function setView(v){['daily','home','dash','input'].forEach(x=>{$('view-'+x).classList.toggle('on',v===x);$('tab-'+x).classList.toggle('on',v===x);});window.scrollTo({top:0,behavior:'smooth'});if(v==='dash')renderDash();if(v==='daily')renderDaily();if(v==='home')renderMorningBrief();}
 
 sb.auth.onAuthStateChange((_e,s)=>render(s));
-async function render(session){SESSION=session;if(session){$('auth').style.display='none';$('app').style.display='block';$('uemail').textContent=session.user.email;$('authBtn').disabled=false;$('weekLabel').textContent=THISWEEK+' 입력';await loadData();renderOverview();buildUnitSelect();buildDailyUnitSelect();buildDashTarget();await onUnitChange();}else{$('app').style.display='none';$('auth').style.display='flex';}}
+async function render(session){SESSION=session;if(session){$('auth').style.display='none';$('app').style.display='block';$('uemail').textContent=session.user.email;$('authBtn').disabled=false;$('weekLabel').textContent=THISWEEK+' 입력';await loadData();renderOverview();renderMorningBrief();buildUnitSelect();buildDailyUnitSelect();buildDashTarget();await onUnitChange();}else{$('app').style.display='none';$('auth').style.display='flex';}}
 
 async function loadData(){const[{data:u},{data:m},{data:us},{data:asn}]=await Promise.all([sb.from('units').select('*').eq('active',true).order('id'),sb.from('metrics').select('id,name,uom,category').eq('active',true).order('category'),sb.from('users').select('id,name,email').eq('active',true),sb.from('assignments').select('user_id,unit_id')]);UNITS=u||[];METRICS=m||[];USERS=us||[];ASSIGNS=asn||[];}
 const uName=id=>{const u=(UNITS.find(x=>x.id===id));return u?(u.name||id):id;};
@@ -466,6 +491,7 @@ async function loadDaily(){
   const {data:note}=await sb.from('daily_notes').select('issue,condition').eq('unit_id',u).eq('log_date',d).maybeSingle();
   $('dyIssue').value=note&&note.issue?note.issue:'';$('dyCond').value=note&&note.condition!=null?note.condition:'';
   if(dm&&dm.length)dymsg('이 날짜에 이미 입력한 값을 불러왔어요. 수정 후 다시 저장하면 돼요.','ok');
+  await renderDayGreet(u);await renderDayTip(u);
   await renderDayWeek(u,d);
 }
 $('dySave').onclick=async()=>{
@@ -482,13 +508,44 @@ $('dySave').onclick=async()=>{
     if(rows.length){const {error}=await sb.from('measurements').upsert(rows,{onConflict:'unit_id,metric_id,grain,period_key'});if(error)throw error;}
     const note={unit_id:u,log_date:d,issue:$('dyIssue').value.trim()||null,condition:$('dyCond').value?parseInt($('dyCond').value):null,created_by:SESSION.user.id,updated_at:new Date().toISOString()};
     const {error:ne}=await sb.from('daily_notes').upsert(note,{onConflict:'unit_id,log_date'});if(ne)throw ne;
-    dymsg('저장됐어요! 이번 주 목표에 반영됐어요.','ok');
-    await renderDayWeek(u,d);
+    await renderDayGreet(u);await renderDayTip(u);
+    const sum=await renderDayWeek(u,d);
+    let cel='저장됐어요! 이번 주 목표에 반영됐어요.';
+    if(sum&&sum.target&&sum.sumS>=sum.target)cel='🎉 주간 목표 달성! 이번 주 목표를 넘겼어요.';
+    else if(sum&&sum.todayS&&sum.yS&&sum.todayS>sum.yS)cel='👍 어제보다 좋아요! (매출 '+(Math.round((sum.todayS-sum.yS)/sum.yS*100))+'% ↑)';
+    dymsg(cel,'ok');
+    const wc=document.querySelector('.dyweekcard');if(wc){wc.classList.add('dyceleb');setTimeout(()=>{wc.classList.remove('dyceleb');},1300);}
   }catch(e){dymsg('저장 실패: '+esc(e.message||e),'err');}
   $('dySave').disabled=false;
 };
+function wonShort(n){return n==null?'—':(Number(n)>=10000?Math.round(Number(n)/10000).toLocaleString()+'만':Number(n).toLocaleString());}
+function addDaysStr(ds,n){const d=new Date(ds+'T00:00:00');d.setDate(d.getDate()+n);return fmtD(d);}
+function myName(){const u=(USERS||[]).find(x=>x.id===SESSION.user.id);return (u&&u.name)?u.name:((SESSION.user.email||'').split('@')[0]||'사장');}
+async function computeStreak(u){
+  const today=fmtD(new Date());const start=addDaysStr(today,-45);
+  const {data}=await sb.from('measurements').select('period_key').eq('unit_id',u).eq('grain','day').eq('metric_id','sales').gte('period_key',start).lte('period_key',today);
+  const set=new Set((data||[]).map(r=>r.period_key));
+  let anchor=set.has(today)?today:(set.has(addDaysStr(today,-1))?addDaysStr(today,-1):null);
+  if(!anchor)return {n:0,today:false};
+  let n=0,cur=anchor;while(set.has(cur)){n++;cur=addDaysStr(cur,-1);}
+  return {n,today:set.has(today)};
+}
+async function renderDayGreet(u){
+  const el=$('dyGreet');if(!el)return;
+  const hr=new Date().getHours();const part=hr<11?'좋은 아침이에요':hr<17?'좋은 오후예요':'오늘도 고생 많으셨어요';
+  const s=await computeStreak(u);
+  let sh=s.n>0?('<span class="dystreak">🔥 '+s.n+'일 연속 기록'+(s.today?'':' · <b>오늘 이어가기</b>')+'</span>'):'<span class="dystreak zero">오늘부터 기록 시작해요</span>';
+  el.innerHTML='<div class="dygreet"><div class="dyg-hi">'+esc(myName())+'님, '+part+'.</div>'+sh+'</div>';
+}
+async function renderDayTip(u){
+  const el=$('dyTip');if(!el)return;el.innerHTML='';
+  try{const {data}=await sb.from('coachings').select('payload').eq('unit_id',u).order('iso_week',{ascending:false}).limit(1);
+    if(data&&data[0]&&data[0].payload){const c=data[0].payload;const one=(c.actions&&c.actions[0])||c.core_problem||c.diagnosis;
+      if(one)el.innerHTML='<div class="dytip"><span class="dytip-k">오늘의<br>한 마디</span><span class="dytip-v">'+esc(one)+'</span></div>';}
+  }catch(_){}
+}
 async function renderDayWeek(u,dateStr){
-  const el=$('dyWeek');if(!el)return;
+  const el=$('dyWeek');if(!el)return null;
   const days=weekDates(dateStr);const iso=isoWeek(new Date(dateStr+'T00:00:00'));
   const {data:dm}=await sb.from('measurements').select('metric_id,period_key,actual_value').eq('unit_id',u).eq('grain','day').in('period_key',days);
   const {data:wkrows}=await sb.from('measurements').select('target_value').eq('unit_id',u).eq('grain','week').eq('period_key',iso).eq('metric_id','sales');
@@ -498,16 +555,44 @@ async function renderDayWeek(u,dateStr){
   const sumS=days.reduce((a,x)=>a+(salesBy[x]||0),0),sumC=days.reduce((a,x)=>a+(custBy[x]||0),0);
   const pct=target?Math.round(sumS/target*1000)/10:null;
   const maxS=Math.max(1,...days.map(x=>salesBy[x]||0));
-  const won=n=>n==null?'—':(n>=10000?Math.round(n/10000).toLocaleString()+'만':n.toLocaleString());
   const dow=['월','화','수','목','금','토','일'];
+  const todayS=salesBy[dateStr]||0;const yStr=addDaysStr(dateStr,-1),lwStr=addDaysStr(dateStr,-7);
+  const {data:cmp}=await sb.from('measurements').select('period_key,actual_value').eq('unit_id',u).eq('grain','day').eq('metric_id','sales').in('period_key',[yStr,lwStr]);
+  const cmpBy={};(cmp||[]).forEach(r=>cmpBy[r.period_key]=Number(r.actual_value));
+  const yS=cmpBy[yStr]||0,lwS=cmpBy[lwStr]||0;
+  const di=(new Date(dateStr+'T00:00:00').getDay()+6)%7;
+  const chip=(lbl,base)=>{if(!base||!todayS)return '';const diff=Math.round((todayS-base)/base*100);return '<span class="dychip '+(diff>=0?'up':'down')+'">'+lbl+' '+(diff>=0?'+':'')+diff+'%</span>';};
+  const chips=chip('어제 대비',yS)+chip('지난 '+dow[di]+'요일',lwS);
+  const daysLeft=7-di;const remain=target!=null?Math.max(0,target-sumS):null;const perDay=(remain!=null&&daysLeft>0&&remain>0)?Math.round(remain/daysLeft):null;
   let bars='';days.forEach((x,i)=>{const v=salesBy[x]||0;const hp=Math.round(v/maxS*100);const isT=x===dateStr;bars+='<div class="dybar'+(isT?' today':(v>0?' has':''))+'"><div class="bar" style="height:'+(v>0?Math.max(hp,6):0)+'%"></div><div class="dl">'+dow[i]+'</div></div>';});
   const cls=pct==null?'':(pct>=100?'':pct>=70?'warn':'bad');const at=sumC>0?Math.round(sumS/sumC):null;
   let h='<div class="dyweekcard"><div class="dyweek-h"><span>이번 주 흐름</span><span class="dyweek-sub">'+esc(iso)+'</span></div>';
-  h+='<div class="dysum"><span>누적 매출 <b>'+won(sumS)+'원</b></span>'+(target?'<span>주간 목표 <b>'+won(target)+'원</b>'+(pct!=null?' ('+pct+'%)':'')+'</span>':'<span class="dyweek-sub">주간 목표 미설정</span>')+'</div>';
+  if(chips)h+='<div class="dychips">'+chips+'</div>';
+  h+='<div class="dysum"><span>누적 매출 <b>'+wonShort(sumS)+'원</b></span>'+(target?'<span>주간 목표 <b>'+wonShort(target)+'원</b>'+(pct!=null?' ('+pct+'%)':'')+'</span>':'<span class="dyweek-sub">주간 목표 미설정</span>')+'</div>';
   if(target)h+='<div class="dyprog '+cls+'"><i style="width:'+Math.min(100,pct||0)+'%"></i></div>';
+  if(remain!=null)h+='<div class="dygoal">'+(remain>0?('목표까지 <b>'+wonShort(remain)+'원</b> · '+daysLeft+'일 남음'+(perDay?' → 하루 <b>'+wonShort(perDay)+'원</b>이면 달성':'')):'이번 주 목표 <b>달성</b> 🎉')+'</div>';
   h+='<div class="dybars">'+bars+'</div>';
   h+='<div class="dysum" style="margin-top:12px;margin-bottom:0"><span>누적 객수 <b>'+(sumC||0)+'명</b></span>'+(at?'<span>평균 객단가 <b>'+at.toLocaleString()+'원</b></span>':'')+'</div></div>';
   el.innerHTML=h;
+  return {sumS,target,pct,todayS,yS};
+}
+async function renderMorningBrief(){
+  const el=$('brief');if(!el||!SESSION)return;
+  const myUnits=[...new Set((ASSIGNS||[]).filter(a=>a.user_id===SESSION.user.id).map(a=>a.unit_id))];
+  if(!myUnits.length){el.innerHTML='';return;}
+  const today=fmtD(new Date()),y=addDaysStr(today,-1);
+  let ydm=[],rv=[],co=[];
+  try{const r=await sb.from('measurements').select('unit_id,actual_value').eq('grain','day').eq('metric_id','sales').eq('period_key',y).in('unit_id',myUnits);ydm=r.data||[];}catch(_){}
+  try{const r=await sb.from('weekly_reviews').select('unit_id').eq('iso_week',THISWEEK).in('unit_id',myUnits);rv=r.data||[];}catch(_){}
+  try{const r=await sb.from('coachings').select('payload').in('unit_id',myUnits).order('updated_at',{ascending:false}).limit(1);co=r.data||[];}catch(_){}
+  const closed=new Set(ydm.map(r=>r.unit_id)),ySum=ydm.reduce((a,r)=>a+Number(r.actual_value||0),0);
+  const submitted=new Set(rv.map(r=>r.unit_id));const missing=myUnits.length-submitted.size;
+  let one='';if(co[0]&&co[0].payload){const c=co[0].payload;one=(c.actions&&c.actions[0])||c.diagnosis||'';}
+  let h='<div class="brief"><div class="brief-hi">'+esc(myName())+'님, 오늘 볼 것</div>';
+  h+='<div class="brief-row"><span class="brief-k">어제 마감</span><span class="brief-v">'+myUnits.length+'개 중 '+closed.size+'개 입력'+(ySum?' · 매출 '+wonShort(ySum)+'원':'')+'</span></div>';
+  h+='<div class="brief-row"><span class="brief-k">이번주 리뷰</span><span class="brief-v">'+submitted.size+'/'+myUnits.length+' 제출'+(missing>0?' · <b>미제출 '+missing+'개</b>':' ✓')+'</span></div>';
+  if(one)h+='<div class="brief-row"><span class="brief-k">최우선</span><span class="brief-v">'+esc(one)+'</span></div>';
+  el.innerHTML=h+'</div>';
 }
 
 function fmsg(t,k){const e=$('fmsg');e.className='fmsg'+(k?(' '+k):'');e.textContent=t||'';}
