@@ -82,6 +82,12 @@
   .lastrow .mn{font-size:14px;font-weight:600}
   .lastrow .tg{font-size:13px;color:var(--ink2);text-align:center}
   .empty{font-size:13.5px;color:var(--ink3);background:#faf9f7;border:1px dashed var(--line);border-radius:10px;padding:14px;line-height:1.5}
+  .addm{margin-top:4px;background:transparent;border:1px dashed var(--line);color:var(--ink2);font:inherit;font-size:13px;font-weight:600;padding:8px 12px;border-radius:9px;cursor:pointer}
+  .pnl{margin-top:8px;width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+  .pnl td{padding:9px 14px;border-bottom:1px solid var(--line2);font-size:13.5px}.pnl tr:last-child td{border-bottom:0}
+  .pnl .lbl{color:var(--ink2)}.pnl .num{text-align:right;font-weight:600;font-variant-numeric:tabular-nums}
+  .pnl .op{background:#fafaf9}.pnl .op td{font-weight:700;font-size:14px}
+  .pnl-note{font-size:12.5px;color:var(--ink3);margin-top:8px;line-height:1.5}
   .subit{width:100%;max-width:680px;background:var(--ink);color:#fff;border:0;border-radius:12px;padding:15px;font:inherit;font-size:15px;font-weight:600;cursor:pointer}
   .subit:disabled{opacity:.5}
   .fmsg{max-width:680px;margin-top:14px;font-size:14px;border-radius:11px;padding:14px 16px;line-height:1.55;display:none}
@@ -201,7 +207,7 @@
 
         <div class="fcard">
           <div class="ft">③ 이번 주 목표</div>
-          <div class="fdesc">고정 지표는 자동으로 불러왔어요. 필요하면 유동 지표를 더하거나 바꾸세요.</div>
+          <div class="fdesc">핵심 손익 지표(매출·객단가·원가율·인건비율)는 고정으로 떠요. 이걸 채우면 예상 손익이 자동 계산돼요. 필요하면 "+ 지표 추가"로 다른 지표도 넣으세요.</div>
           <div class="mhead"><div>지표</div><div>목표 수치</div><div></div></div>
           <div id="thisMetrics"></div>
         </div>
@@ -278,17 +284,19 @@ async function onUnitChange(){
     LASTMEAS.forEach((r,i)=>{const m=mById(r.metric_id);h+='<div class="lastrow"><div class="mn">'+esc(m.name||r.metric_id)+'</div><div class="tg">'+(r.target_value??'—')+' '+esc(m.uom||'')+'</div><input type="number" class="last-act" data-mid="'+r.metric_id+'" placeholder="실적" value="'+(r.actual_value??'')+'"></div>';});
     $('lastMetrics').innerHTML=h;
   }
-  // 이번주 목표: 이미 저장한 값이 있으면 그걸, 없으면 고정/유동 자동 로드
+  // 이번주 목표: 핵심 손익 지표(고정 anchor)를 항상 먼저 노출, 그다음 저장값/지난주 이어오기
   const {data:twMeas}=await sb.from('measurements').select('metric_id,target_value').eq('unit_id',u).eq('grain','week').eq('period_key',THISWEEK);
   const {data:um}=await sb.from('unit_metrics').select('metric_id,tier').eq('unit_id',u).eq('active',true).is('effective_to',null);
+  const anchors=(um||[]).filter(x=>x.tier==='anchor').map(x=>x.metric_id);
   if(twMeas&&twMeas.length){
-    buildThisMetrics(twMeas.map(x=>x.metric_id));
+    const preset=[...new Set([...anchors,...twMeas.map(x=>x.metric_id)])];
+    buildThisMetrics(preset);
     const sels=[...document.querySelectorAll('.tw-sel')],tgts=[...document.querySelectorAll('.tw-tgt')];
     sels.forEach((s,i)=>{const row=twMeas.find(x=>x.metric_id===s.value);if(row&&tgts[i])tgts[i].value=(row.target_value??'');});
   }else{
-    // 아직 이번주 저장 전: 지난주 목표 지표를 초기값으로 이어옴(연속성), 없으면 고정·유동 지표
-    const carry=(LASTMEAS&&LASTMEAS.length)?LASTMEAS.map(x=>x.metric_id):(um||[]).map(x=>x.metric_id);
-    buildThisMetrics(carry);
+    const carry=(LASTMEAS&&LASTMEAS.length)?LASTMEAS.map(x=>x.metric_id):[];
+    const preset=[...new Set([...anchors,...carry])];
+    buildThisMetrics(preset.length?preset:(um||[]).map(x=>x.metric_id));
   }
   // 서술형: 이번주에 이미 저장한 답이 있으면 복원
   await restoreReview(u);
@@ -311,10 +319,12 @@ async function restoreReview(u){
 }
 
 function metricOptions(sel){return '<option value="">— 지표 선택 —</option>'+METRICS.map(m=>'<option value="'+m.id+'" data-uom="'+esc(m.uom)+'"'+(m.id===sel?' selected':'')+'>'+esc(m.name)+' ('+esc(m.uom)+')</option>').join('');}
+function twRowHtml(id){return '<div class="mrow"><select class="tw-sel">'+metricOptions(id)+'</select><div style="position:relative"><input type="number" class="tw-tgt" placeholder="목표"></div><div></div></div>';}
 function buildThisMetrics(preset){
-  const ids=preset.slice(0,3); while(ids.length<3) ids.push('');
-  $('thisMetrics').innerHTML=ids.map((id,i)=>'<div class="mrow"><select class="tw-sel">'+metricOptions(id)+'</select><div style="position:relative"><input type="number" class="tw-tgt" placeholder="목표"></div><div></div></div>').join('');
+  const ids=preset.slice(); while(ids.length<3) ids.push('');
+  $('thisMetrics').innerHTML=ids.map(id=>twRowHtml(id)).join('')+'<button type="button" class="addm" onclick="addMetricRow()">+ 지표 추가</button>';
 }
+function addMetricRow(){const btn=$('thisMetrics').querySelector('.addm');const d=document.createElement('div');d.className='mrow';d.innerHTML='<select class="tw-sel">'+metricOptions('')+'</select><div style="position:relative"><input type="number" class="tw-tgt" placeholder="목표"></div><div></div>';$('thisMetrics').insertBefore(d,btn);}
 
 function fmsg(t,k){const e=$('fmsg');e.className='fmsg'+(k?(' '+k):'');e.textContent=t||'';}
 
@@ -388,13 +398,44 @@ async function renderDash(){
   if(DSCOPE==='unit'&&tgt==='ALL'){h+=leaderboard(meas);}
   else{const byU={};meas.forEach(m=>{(byU[m.unit_id]=byU[m.unit_id]||[]).push(m);});const keys=Object.keys(byU).sort();const multi=keys.length>1;
     if(keys.length===0)h+=empty('측정값은 아직 없지만 주간 리뷰는 쌓이고 있어요. 아래 코칭을 참고하세요.');
-    keys.forEach(uid=>{h+='<div class="sh" style="margin-top:26px">'+(multi?esc(uName(uid)):'지표별 추이')+'</div>'+metricCards(byU[uid]);h+='<div class="sh" style="margin-top:22px">주차별 달성률'+(multi?(' · '+esc(uName(uid))):'')+'</div>'+achTable(byU[uid]);});}
+    keys.forEach(uid=>{h+='<div class="sh" style="margin-top:26px">'+(multi?esc(uName(uid)):'지표별 추이')+'</div>'+metricCards(byU[uid]);h+='<div class="sh" style="margin-top:22px">주차별 달성률'+(multi?(' · '+esc(uName(uid))):'')+'</div>'+achTable(byU[uid]);h+=pnlBlock(byU[uid],uid);});}
   h+='<div class="sh" style="margin-top:28px">코칭 · 인사이트</div>';
   const ins=computeInsights(meas,revs);
   h+=ins.length?ins.map(insCard).join(''):'<div class="empty">아직 코칭할 데이터가 부족해요. 몇 주 더 쌓이면 패턴이 보여요.</div>';
   body.innerHTML=h;
 }
 
+function pnlBlock(rows,uid){
+  const unit=UNITS.find(u=>u.id===uid)||{};
+  const byW={};rows.forEach(r=>{(byW[r.period_key]=byW[r.period_key]||{})[r.metric_id]=r;});
+  const weeks=Object.keys(byW).sort();
+  let wk=null;for(let i=weeks.length-1;i>=0;i--){const s=byW[weeks[i]].sales;if(s&&(s.actual_value!=null||s.target_value!=null)){wk=weeks[i];break;}}
+  if(!wk)return '';
+  const g=mid=>{const r=byW[wk][mid];if(!r)return null;return r.actual_value!=null?r.actual_value:r.target_value;};
+  const usedActual=byW[wk].sales.actual_value!=null;
+  const sales=g('sales'),costR=g('cost_ratio'),laborR=g('labor_ratio');
+  const cfg=(unit.metadata&&unit.metadata.pnl)||{};
+  const fixedWk=(cfg.rent_month!=null||cfg.other_fixed_month!=null)?((Number(cfg.rent_month||0)+Number(cfg.other_fixed_month||0))/4.3):null;
+  const cost=costR!=null?sales*costR/100:null;
+  const gross=cost!=null?sales-cost:null;
+  const labor=laborR!=null?sales*laborR/100:null;
+  const op=(gross!=null&&labor!=null)?gross-labor-(fixedWk||0):null;
+  const opM=(op!=null&&sales)?op/sales*100:null;
+  const w=v=>v==null?'—':Math.round(v).toLocaleString()+'원';
+  const row=(lbl,num)=>'<tr><td class="lbl">'+esc(lbl)+'</td><td class="num">'+num+'</td></tr>';
+  let h='<div class="sh" style="margin-top:22px">예상 손익 · '+esc(wk)+' <span style="font-weight:500;color:var(--ink3)">('+(usedActual?'실적':'목표')+' 기준)</span></div>';
+  h+='<table class="pnl"><tbody>';
+  h+=row('매출',w(sales));
+  h+=row('− 원가 ('+(costR!=null?costR+'%':'원가율 미입력')+')',cost!=null?w(cost):'—');
+  h+=row('매출총이익',gross!=null?w(gross):'—');
+  h+=row('− 인건비 ('+(laborR!=null?laborR+'%':'인건비율 미입력')+')',labor!=null?w(labor):'—');
+  h+=row('− 주간 고정비'+(fixedWk!=null?'':' (미설정)'),fixedWk!=null?w(fixedWk):'—');
+  h+='<tr class="op"><td class="lbl">영업이익'+(opM!=null?' ('+(Math.round(opM*10)/10)+'%)':'')+'</td><td class="num">'+(op!=null?w(op):'—')+'</td></tr>';
+  h+='</tbody></table>';
+  const miss=[];if(costR==null)miss.push('원가율');if(laborR==null)miss.push('인건비율');if(fixedWk==null)miss.push('고정비(임차료 등)');
+  if(miss.length)h+='<div class="pnl-note">영업이익까지 보려면 '+miss.join(' · ')+' 입력이 필요해요. (원가율·인건비율은 주간 입력에서, 고정비는 매장 설정에서 — 설정 화면은 다음 업데이트)</div>';
+  return h;
+}
 function metricCards(rows){const byM={};rows.forEach(r=>{(byM[r.metric_id]=byM[r.metric_id]||[]).push(r);});let h='<div class="dgrid">';
   Object.keys(byM).forEach(mid=>{const m=mById(mid);const series=byM[mid].slice().sort((a,b)=>a.period_key<b.period_key?-1:1).map(r=>({week:r.period_key,target:r.target_value,actual:r.actual_value}));
     const last=series[series.length-1];const p=achPct(last.target,last.actual);const cls=achClass(p);
