@@ -224,6 +224,18 @@
   .dytip{display:flex;gap:10px;align-items:flex-start;background:linear-gradient(180deg,#fbfaff,#fff);border:1px solid #e4e0f0;border-left:3px solid var(--violet);border-radius:13px;padding:13px 15px;margin-bottom:14px;max-width:520px}
   .dytip-k{flex-shrink:0;font-size:11px;font-weight:700;color:var(--violet);text-transform:uppercase;letter-spacing:.02em;padding-top:2px}
   .dytip-v{font-size:13.5px;line-height:1.5;color:var(--ink);font-weight:550}
+  .dyplan{background:linear-gradient(180deg,#fbfaff,#fff);border:1px solid #e4e0f0;border-left:3px solid var(--violet);border-radius:14px;padding:15px 17px;margin-bottom:14px;max-width:520px}
+  .dyplan-k{font-size:11px;font-weight:700;color:var(--violet);text-transform:uppercase;letter-spacing:.02em}
+  .dyplan-act{font-size:15.5px;font-weight:700;line-height:1.45;color:var(--ink);margin-top:5px}
+  .dyplan-pace{font-size:12.5px;color:var(--amber);font-weight:650;margin-top:7px}
+  .dyplan-wk{margin-top:12px;padding-top:11px;border-top:1px solid var(--line2)}
+  .dyplan-wt{font-size:11px;font-weight:700;color:var(--ink3);text-transform:uppercase;letter-spacing:.02em;margin-bottom:6px}
+  .dyplan-pri{font-size:13.5px;color:var(--ink);font-weight:600;margin-bottom:7px}
+  .dyplan-pri span{color:var(--ink3);font-weight:600;font-size:11px;margin-right:5px}
+  .dyplan-tk{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--ink2);padding:3px 0}
+  .dyplan-tk .dd{flex-shrink:0;font-size:11px;font-weight:700;color:var(--blue);background:var(--blue-bg);border-radius:99px;padding:2px 8px}
+  .dyplan-tk .dd.over{color:var(--red);background:var(--red-bg)}
+  .dyplan-empty{font-size:13px;color:var(--ink3)}
   .dychips{display:flex;gap:7px;flex-wrap:wrap;margin:10px 0 2px}
   .dychip{font-size:12px;font-weight:700;padding:4px 11px;border-radius:99px}
   .dychip.up{color:var(--green);background:var(--green-bg);border:1px solid #cfe6d9}
@@ -491,8 +503,9 @@ async function loadDaily(){
   const {data:note}=await sb.from('daily_notes').select('issue,condition').eq('unit_id',u).eq('log_date',d).maybeSingle();
   $('dyIssue').value=note&&note.issue?note.issue:'';$('dyCond').value=note&&note.condition!=null?note.condition:'';
   if(dm&&dm.length)dymsg('이 날짜에 이미 입력한 값을 불러왔어요. 수정 후 다시 저장하면 돼요.','ok');
-  await renderDayGreet(u);await renderDayTip(u);
-  await renderDayWeek(u,d);
+  await renderDayGreet(u);
+  const sum=await renderDayWeek(u,d);
+  await renderDayPlan(u,d,sum);
 }
 $('dySave').onclick=async()=>{
   const u=$('dyUnit').value,d=$('dyDate').value;if(!u||!d){dymsg('매장과 날짜를 선택해주세요.','err');return;}
@@ -508,8 +521,9 @@ $('dySave').onclick=async()=>{
     if(rows.length){const {error}=await sb.from('measurements').upsert(rows,{onConflict:'unit_id,metric_id,grain,period_key'});if(error)throw error;}
     const note={unit_id:u,log_date:d,issue:$('dyIssue').value.trim()||null,condition:$('dyCond').value?parseInt($('dyCond').value):null,created_by:SESSION.user.id,updated_at:new Date().toISOString()};
     const {error:ne}=await sb.from('daily_notes').upsert(note,{onConflict:'unit_id,log_date'});if(ne)throw ne;
-    await renderDayGreet(u);await renderDayTip(u);
+    await renderDayGreet(u);
     const sum=await renderDayWeek(u,d);
+    await renderDayPlan(u,d,sum);
     let cel='저장됐어요! 이번 주 목표에 반영됐어요.';
     if(sum&&sum.target&&sum.sumS>=sum.target)cel='🎉 주간 목표 달성! 이번 주 목표를 넘겼어요.';
     else if(sum&&sum.todayS&&sum.yS&&sum.todayS>sum.yS)cel='👍 어제보다 좋아요! (매출 '+(Math.round((sum.todayS-sum.yS)/sum.yS*100))+'% ↑)';
@@ -537,12 +551,35 @@ async function renderDayGreet(u){
   let sh=s.n>0?('<span class="dystreak">🔥 '+s.n+'일 연속 기록'+(s.today?'':' · <b>오늘 이어가기</b>')+'</span>'):'<span class="dystreak zero">오늘부터 기록 시작해요</span>';
   el.innerHTML='<div class="dygreet"><div class="dyg-hi">'+esc(myName())+'님, '+part+'.</div>'+sh+'</div>';
 }
-async function renderDayTip(u){
-  const el=$('dyTip');if(!el)return;el.innerHTML='';
-  try{const {data}=await sb.from('coachings').select('payload').eq('unit_id',u).order('iso_week',{ascending:false}).limit(1);
-    if(data&&data[0]&&data[0].payload){const c=data[0].payload;const one=(c.actions&&c.actions[0])||c.core_problem||c.diagnosis;
-      if(one)el.innerHTML='<div class="dytip"><span class="dytip-k">오늘의<br>한 마디</span><span class="dytip-v">'+esc(one)+'</span></div>';}
-  }catch(_){}
+function daysUntil(fromStr,dueStr){return Math.round((new Date(dueStr+'T00:00:00')-new Date(fromStr+'T00:00:00'))/86400000);}
+async function renderDayPlan(u,dateStr,sum){
+  const el=$('dyTip');if(!el)return;
+  // 이번 주 계획(리뷰) + 열린 과제
+  let rev=null,tasks=[];
+  try{const {data}=await sb.from('weekly_reviews').select('top_priority,plan_text').eq('unit_id',u).eq('iso_week',THISWEEK).order('submitted_at',{ascending:false}).limit(1);rev=data&&data[0];}catch(_){}
+  try{const {data}=await sb.from('tasks').select('title,due_date,assignee_name,status').eq('unit_id',u).eq('period_key',THISWEEK).neq('status','done').neq('status','dropped');tasks=data||[];}catch(_){}
+  const open=tasks.slice().sort((a,b)=>((a.due_date||'9999')<(b.due_date||'9999')?-1:1));
+  // 페이스
+  const di=(new Date(dateStr+'T00:00:00').getDay()+6)%7;const daysLeft=7-di;
+  const remain=(sum&&sum.target!=null)?Math.max(0,sum.target-sum.sumS):null;
+  const perDay=(remain&&daysLeft>0)?Math.round(remain/daysLeft):null;
+  // 오늘 할 것
+  let act='',lead='오늘 할 것';
+  const due=open.find(t=>t.due_date&&t.due_date<=dateStr);
+  if(due){act=due.title;lead='오늘 마감';}
+  else if(open[0]){const d=open[0].due_date?daysUntil(dateStr,open[0].due_date):null;act=open[0].title+(d!=null?(d===0?' (오늘까지)':' (D-'+d+')'):'');}
+  else if(rev&&rev.top_priority){act=rev.top_priority;lead='이번 주 최우선';}
+  let h='<div class="dyplan"><div class="dyplan-k">'+lead+'</div>';
+  h+='<div class="dyplan-act">'+(act?esc(act):'이번 주 계획을 세워보세요 — 주간 입력 탭에서 최우선·과제를 정하면 여기 떠요.')+'</div>';
+  if(perDay)h+='<div class="dyplan-pace">매출 페이스: 오늘 '+wonShort(perDay)+'원이면 목표 궤도 유지</div>';
+  // 이번 주 계획 리마인드
+  if((rev&&rev.top_priority)||open.length){
+    h+='<div class="dyplan-wk"><div class="dyplan-wt">이번 주 계획</div>';
+    if(rev&&rev.top_priority)h+='<div class="dyplan-pri"><span>최우선</span>'+esc(rev.top_priority)+'</div>';
+    open.slice(0,4).forEach(t=>{const d=t.due_date?daysUntil(dateStr,t.due_date):null;const dd=d!=null?(d<0?'<span class="dd over">지남</span>':d===0?'<span class="dd over">오늘</span>':'<span class="dd">D-'+d+'</span>'):'';h+='<div class="dyplan-tk">'+dd+'<span>'+esc(t.title)+(t.assignee_name?' · '+esc(t.assignee_name):'')+'</span></div>';});
+    h+='</div>';
+  }
+  el.innerHTML=h+'</div>';
 }
 async function renderDayWeek(u,dateStr){
   const el=$('dyWeek');if(!el)return null;
@@ -687,13 +724,43 @@ async function renderDash(){
       h+='<div class="sh" style="margin-top:22px">주차별 달성률</div>'+achTable(byU[uid]);
       h+=pnlBlock(byU[uid],uid);
       h+='<div class="sh" style="margin-top:22px">실행 과제</div><div id="tasks-'+esc(uid)+'"><div class="empty">과제 불러오는 중…</div></div>';
+      h+='<div class="sh" style="margin-top:22px">일간 흐름 · 이슈 · 컨디션 (이번 주)</div><div id="daily-'+esc(uid)+'"><div class="empty">일간 데이터 불러오는 중…</div></div>';
     });}
   h+='<div class="sh" style="margin-top:28px">빠른 신호</div>';
   const ins=computeInsights(meas,revs);
   h+=ins.length?ins.map(insCard).join(''):'<div class="empty">아직 신호로 잡을 데이터가 부족해요. 몇 주 더 쌓이면 패턴이 보여요.</div>';
   body.innerHTML=h;
   if(window.__portfolioCtx)loadPortfolio(window.__portfolioCtx);
-  if(coachItems.length){loadCoachings(coachItems);loadTasksDash(coachItems);}
+  if(coachItems.length){loadCoachings(coachItems);loadTasksDash(coachItems);loadDailyDash(coachItems);}
+}
+
+/* ===== 대시보드 일간 흐름 (매출·객수·컨디션·이슈) ===== */
+async function loadDailyDash(items){
+  const today=fmtD(new Date());const days=weekDates(today);
+  for(const it of items){
+    const el=$('daily-'+it.uid);if(!el)continue;
+    try{
+      const {data:dm}=await sb.from('measurements').select('metric_id,period_key,actual_value').eq('unit_id',it.uid).eq('grain','day').in('period_key',days);
+      const {data:notes}=await sb.from('daily_notes').select('log_date,issue,condition').eq('unit_id',it.uid).in('log_date',days);
+      el.innerHTML=dailyDashHtml(days,dm||[],notes||[]);
+    }catch(e){el.innerHTML='<div class="empty">일간 데이터를 불러오지 못했어요.</div>';}
+  }
+}
+function dailyDashHtml(days,dm,notes){
+  const salesBy={},custBy={};dm.forEach(r=>{if(r.metric_id==='sales')salesBy[r.period_key]=Number(r.actual_value);if(r.metric_id==='total_customers')custBy[r.period_key]=Number(r.actual_value);});
+  const noteBy={};notes.forEach(n=>noteBy[n.log_date]=n);
+  const entered=days.filter(d=>salesBy[d]!=null||custBy[d]!=null||noteBy[d]);
+  if(!entered.length)return '<div class="empty">아직 이번 주 일간 입력이 없어요. \'오늘\' 탭에서 매일 찍으면 매출·객수·이슈·컨디션이 여기 쌓여요.</div>';
+  const face={5:'😄',4:'🙂',3:'😐',2:'😟',1:'😣'};const dow=['월','화','수','목','금','토','일'];
+  const sumS=days.reduce((a,d)=>a+(salesBy[d]||0),0),sumC=days.reduce((a,d)=>a+(custBy[d]||0),0);
+  const maxS=Math.max(1,...days.map(d=>salesBy[d]||0));
+  let bars='';days.forEach((d,i)=>{const v=salesBy[d]||0;const hp=Math.round(v/maxS*100);bars+='<div class="dybar'+(v>0?' has':'')+'"><div class="bar" style="height:'+(v>0?Math.max(hp,6):0)+'%"></div><div class="dl">'+dow[i]+'</div></div>';});
+  let rows='';entered.forEach(d=>{const n=noteBy[d]||{};const di=(new Date(d+'T00:00:00').getDay()+6)%7;rows+='<tr><td style="font-weight:600">'+dow[di]+' '+esc(d.slice(5))+'</td><td style="text-align:right;font-variant-numeric:tabular-nums">'+(salesBy[d]!=null?wonShort(salesBy[d])+'원':'—')+'</td><td style="text-align:right">'+(custBy[d]!=null?custBy[d]+'명':'—')+'</td><td style="text-align:center;font-size:15px">'+(n.condition?(face[n.condition]||n.condition):'')+'</td><td>'+(n.issue?esc(n.issue):'')+'</td></tr>';});
+  let h='<div class="dyweekcard" style="max-width:none">';
+  h+='<div class="dysum" style="margin-bottom:10px"><span>이번 주 누적 <b>'+wonShort(sumS)+'원</b></span><span>객수 <b>'+sumC+'명</b></span></div>';
+  h+='<div class="dybars" style="margin-bottom:14px">'+bars+'</div>';
+  h+='<table class="atable"><thead><tr><th>일자</th><th style="text-align:right">매출</th><th style="text-align:right">객수</th><th style="text-align:center">컨디션</th><th>이슈</th></tr></thead><tbody>'+rows+'</tbody></table>';
+  return h+'</div>';
 }
 
 /* ===== AI 코칭 (인라인 자동 노출) ===== */
