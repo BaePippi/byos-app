@@ -132,7 +132,34 @@
   .ins .id{font-size:13px;color:var(--ink2);line-height:1.5}
   .badge2{display:inline-block;font-size:11px;font-weight:700;padding:2px 8px;border-radius:99px;background:rgba(0,0,0,.05);color:var(--ink2);margin-left:6px}
   .emptybig{text-align:center;color:var(--ink3);background:#faf9f7;border:1px dashed var(--line);border-radius:14px;padding:40px 20px;font-size:14px;line-height:1.6;margin-top:16px}
-  @media(max-width:820px){.dgrid{grid-template-columns:1fr}}
+  /* AI 코칭 (인라인) */
+  .coachwrap{margin-top:14px}
+  .coachcard{background:linear-gradient(180deg,#fbfaff,#fff);border:1px solid #e4e0f0;border-left:3px solid var(--violet);border-radius:15px;padding:18px 20px;box-shadow:0 1px 2px rgba(0,0,0,.03),0 8px 22px rgba(0,0,0,.04)}
+  .coach-h{display:flex;align-items:center;gap:8px;margin-bottom:11px}
+  .coach-badge{font-size:11px;font-weight:700;color:#fff;background:var(--violet);border-radius:99px;padding:3px 10px;letter-spacing:.02em}
+  .coach-wk{font-size:12px;color:var(--ink3);font-weight:600}
+  .coach-eng{font-size:11px;color:var(--amber);background:var(--amber-bg);border:1px solid #eeddb8;border-radius:99px;padding:2px 8px}
+  .coach-refresh{margin-left:auto;font-size:12px;color:var(--ink3);background:transparent;border:1px solid var(--line);border-radius:8px;padding:5px 10px;cursor:pointer;font-weight:600}
+  .coach-refresh:hover{color:var(--violet);border-color:var(--violet)}
+  .coach-diag{font-size:15px;font-weight:650;line-height:1.55;color:var(--ink);margin-bottom:12px}
+  .coach-row{display:flex;gap:10px;margin-bottom:9px;font-size:13.5px;line-height:1.5}
+  .coach-lbl{flex-shrink:0;width:64px;font-size:11px;font-weight:700;color:var(--violet);text-transform:uppercase;letter-spacing:.02em;padding-top:2px}
+  .coach-val{color:var(--ink2);flex:1}
+  .coach-actwrap{margin:12px 0 4px;padding:12px 15px;background:#faf9fd;border:1px solid #ece8f6;border-radius:11px}
+  .coach-actwrap .coach-lbl{width:auto;margin-bottom:2px}
+  .coach-acts{margin:7px 0 0;padding-left:20px}
+  .coach-acts li{font-size:13.5px;line-height:1.55;color:var(--ink2);margin-bottom:7px}
+  .coach-acts li.lead{color:var(--ink);font-weight:650}
+  .coach-owner{margin-top:11px;font-size:13px;line-height:1.5;color:#7a5b12;background:var(--amber-bg);border:1px solid #eeddb8;border-radius:10px;padding:9px 12px}
+  .coach-owner-t{font-weight:700}
+  .coach-watch{margin-top:9px;font-size:13px;color:var(--blue);font-weight:600;line-height:1.5}
+  .coach-conf{margin-top:10px;font-size:12px;color:var(--ink3);line-height:1.5;font-style:italic;border-top:1px solid var(--line2);padding-top:9px}
+  .coach-ev{margin-top:8px;font-size:12.5px;color:var(--ink3)}
+  .coach-ev summary{cursor:pointer;font-weight:600}
+  .coach-ev ul{margin:6px 0 0;padding-left:18px}.coach-ev li{margin-bottom:3px}
+  .coach-load{font-size:13.5px;color:var(--ink3);background:#faf9fd;border:1px dashed #ddd6ee;border-radius:12px;padding:16px 18px;line-height:1.5}
+  .coach-err{font-size:13px;color:#8a2a22;background:var(--red-bg);border:1px solid #f2c8c3;border-radius:11px;padding:12px 14px}
+  @media(max-width:820px){.dgrid{grid-template-columns:1fr}.coach-row{flex-direction:column;gap:2px}.coach-lbl{width:auto}}
 </style>
 </head>
 <body>
@@ -355,7 +382,8 @@ $('submitBtn').onclick=async()=>{
     if(me)throw me;
     // 지난주 실적 업데이트
     for(const la of lastActs){await sb.from('measurements').update({actual_value:la.actual}).eq('unit_id',unit_id).eq('metric_id',la.metric_id).eq('grain','week').eq('period_key',LASTWEEK);}
-    fmsg('저장됐어요! 이번 주 목표와 지난주 실적이 DB에 쌓였어요.','ok');
+    try{await sb.from('coachings').delete().eq('unit_id',unit_id);}catch(_){}
+    fmsg('저장됐어요! 이번 주 목표와 지난주 실적이 DB에 쌓였어요. 대시보드 코칭도 새로 반영돼요.','ok');
     await showSaved(unit_id);
   }catch(e){fmsg('저장 실패: '+esc(e.message||e),'err');}
   $('submitBtn').disabled=false;
@@ -395,15 +423,71 @@ async function renderDash(){
   const nMetrics=new Set(meas.map(m=>m.metric_id)).size;
   let h='<div class="tiles">'+tile('최근 주 평균 달성률',avgAch==null?'—':avgAch,avgAch==null?'':'%')+tile('추적 지표',nMetrics,'개')+tile('데이터 주차',weeks.length,'주')+'</div>';
   if(latestWk)h+='<div style="margin-top:8px;color:var(--ink3);font-size:12.5px">기준 주차: '+esc(latestWk)+'</div>';
+  const coachItems=[];
   if(DSCOPE==='unit'&&tgt==='ALL'){h+=leaderboard(meas);}
   else{const byU={};meas.forEach(m=>{(byU[m.unit_id]=byU[m.unit_id]||[]).push(m);});const keys=Object.keys(byU).sort();const multi=keys.length>1;
     if(keys.length===0)h+=empty('측정값은 아직 없지만 주간 리뷰는 쌓이고 있어요. 아래 코칭을 참고하세요.');
-    keys.forEach(uid=>{h+='<div class="sh" style="margin-top:26px">'+(multi?esc(uName(uid)):'지표별 추이')+'</div>'+metricCards(byU[uid]);h+='<div class="sh" style="margin-top:22px">주차별 달성률'+(multi?(' · '+esc(uName(uid))):'')+'</div>'+achTable(byU[uid]);h+=pnlBlock(byU[uid],uid);});}
-  h+='<div class="sh" style="margin-top:28px">코칭 · 인사이트</div>';
+    keys.forEach(uid=>{
+      const uwks=[...new Set(byU[uid].map(r=>r.period_key))].sort();const uwk=uwks[uwks.length-1];
+      coachItems.push({uid,wk:uwk});
+      if(multi)h+='<div class="sh" style="margin-top:30px;font-size:15px;color:var(--ink)">'+esc(uName(uid))+'</div>';
+      h+='<div class="coachwrap" id="coach-'+esc(uid)+'"><div class="coach-load">🧠 이번 주 코칭 불러오는 중…</div></div>';
+      h+='<div class="sh" style="margin-top:22px">지표 추이</div>'+metricCards(byU[uid]);
+      h+='<div class="sh" style="margin-top:22px">주차별 달성률</div>'+achTable(byU[uid]);
+      h+=pnlBlock(byU[uid],uid);
+    });}
+  h+='<div class="sh" style="margin-top:28px">빠른 신호</div>';
   const ins=computeInsights(meas,revs);
-  h+=ins.length?ins.map(insCard).join(''):'<div class="empty">아직 코칭할 데이터가 부족해요. 몇 주 더 쌓이면 패턴이 보여요.</div>';
+  h+=ins.length?ins.map(insCard).join(''):'<div class="empty">아직 신호로 잡을 데이터가 부족해요. 몇 주 더 쌓이면 패턴이 보여요.</div>';
   body.innerHTML=h;
+  if(coachItems.length)loadCoachings(coachItems);
 }
+
+/* ===== AI 코칭 (인라인 자동 노출) ===== */
+function coachHtml(c,uid,wk,engine){
+  if(!c)return '<div class="coach-err">코칭 내용이 비어 있어요.</div>';
+  const acts=(c.actions||[]).filter(a=>a&&String(a).trim());
+  const ev=(c.evidence||[]).filter(a=>a&&String(a).trim());
+  const isClaude=!engine||/claude/i.test(engine);
+  let h='<div class="coachcard"><div class="coach-h"><span class="coach-badge">AI 코칭</span><span class="coach-wk">'+esc(wk||'')+'</span>';
+  if(!isClaude)h+='<span class="coach-eng">'+esc(String(engine).replace(/^fallback.*/,'룰 기반'))+'</span>';
+  h+='<button class="coach-refresh" onclick="refreshCoach(\''+esc(uid)+'\',\''+esc(wk)+'\')">⟳ 다시</button></div>';
+  if(c.diagnosis)h+='<div class="coach-diag">'+esc(c.diagnosis)+'</div>';
+  if(c.core_problem)h+='<div class="coach-row"><div class="coach-lbl">핵심 병목</div><div class="coach-val">'+esc(c.core_problem)+'</div></div>';
+  if(c.accountability&&String(c.accountability).trim())h+='<div class="coach-row"><div class="coach-lbl">책임 추적</div><div class="coach-val">'+esc(c.accountability)+'</div></div>';
+  if(acts.length)h+='<div class="coach-actwrap"><div class="coach-lbl">이번 주 지시</div><ol class="coach-acts">'+acts.map((a,i)=>'<li'+(i===0?' class="lead"':'')+'>'+esc(a)+'</li>').join('')+'</ol></div>';
+  if(c.owner_note&&String(c.owner_note).trim())h+='<div class="coach-owner"><span class="coach-owner-t">대표 개입</span> '+esc(c.owner_note)+'</div>';
+  if(c.watch_question)h+='<div class="coach-watch">👁 다음 주 점검 — '+esc(c.watch_question)+'</div>';
+  if(c.confidence)h+='<div class="coach-conf">신뢰도 — '+esc(c.confidence)+'</div>';
+  if(ev.length)h+='<details class="coach-ev"><summary>근거 '+ev.length+'개</summary><ul>'+ev.map(e=>'<li>'+esc(e)+'</li>').join('')+'</ul></details>';
+  return h+'</div>';
+}
+async function loadCoachings(items){
+  const uids=items.map(i=>i.uid);
+  let cmap={};
+  try{const{data:cached}=await sb.from('coachings').select('unit_id,iso_week,payload').in('unit_id',uids);(cached||[]).forEach(c=>{cmap[c.unit_id+'|'+c.iso_week]=c.payload;});}catch(_){}
+  for(const it of items){
+    const el=$('coach-'+it.uid);if(!el)continue;
+    const hit=cmap[it.uid+'|'+it.wk];
+    if(hit){el.innerHTML=coachHtml(hit,it.uid,it.wk,hit._engine);continue;}
+    await genCoach(it.uid,it.wk,el,false);
+  }
+}
+async function genCoach(uid,wk,el,isRefresh){
+  el.innerHTML='<div class="coach-load">🧠 '+(isRefresh?'다시 코칭 중…':'코칭 생성 중… (이 매장은 처음이라 몇 초 걸려요)')+'</div>';
+  try{
+    const{data,error}=await sb.functions.invoke('coach',{body:{unit_id:uid,iso_week:wk}});
+    if(error)throw error;
+    if(data&&data.coaching){
+      const eng=data.engine;const payload={...data.coaching,_engine:eng};
+      el.innerHTML=coachHtml(payload,uid,wk,eng);
+      try{await sb.from('coachings').upsert({unit_id:uid,iso_week:wk,payload,engine:eng,updated_at:new Date().toISOString()},{onConflict:'unit_id,iso_week'});}catch(_){}
+    }else{
+      el.innerHTML='<div class="coach-err">코칭을 만들지 못했어요'+(data&&data.error?': '+esc(data.error):'')+'</div>';
+    }
+  }catch(e){el.innerHTML='<div class="coach-err">코칭 호출 실패: '+esc(e.message||e)+'</div>';}
+}
+async function refreshCoach(uid,wk){const el=$('coach-'+uid);if(el)await genCoach(uid,wk,el,true);}
 
 function pnlBlock(rows,uid){
   const unit=UNITS.find(u=>u.id===uid)||{};
