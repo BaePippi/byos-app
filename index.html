@@ -310,6 +310,23 @@ html.dark{--fill:rgba(255,255,255,.055)}
 .coach-load{background:var(--fill)}
 .coach-actwrap .coach-lbl,.coach-owner-t{color:var(--accent-2)}
 </style>
+<style id="u4">
+.coachcard,.dytip,.dyplan,.brief{border-left-width:1px;border-left-color:var(--line)}
+</style>
+<style id="u5">
+.dgroup{display:flex;align-items:center;gap:9px;flex:1;min-width:0}
+.dgroup .dlbl{flex-shrink:0}
+.dgroup select{flex:1;min-width:0;width:auto}
+@media(max-width:520px){.dbar{flex-direction:column;align-items:stretch}.dgroup{width:100%}}
+.tile .tdelta{font-size:12px;font-weight:700;margin-top:6px}
+.tile .tdelta.up{color:var(--green)}.tile .tdelta.down{color:var(--red)}
+.attnwrap{display:flex;flex-direction:column;gap:8px}
+.attn{display:flex;align-items:center;gap:10px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:13px 15px;box-shadow:var(--card-sh);font-size:14px}
+.adot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.adot.bad{background:var(--red)}.adot.warn{background:var(--amber)}
+.aname{font-weight:650}
+.ar{margin-left:auto;font-size:12.5px;color:var(--ink2);font-weight:600}
+</style>
 </head>
 <body>
   <div class="authwrap" id="auth">
@@ -362,7 +379,7 @@ html.dark{--fill:rgba(255,255,255,.055)}
       </div>
 
       <div class="view on" id="view-home">
-        <div class="hero"><div class="eyebrow">BY Partners · 주간경영 운영체제</div><h1>안녕하세요.</h1><p class="sub">실제 데이터베이스에서 조직 구조와 지표를 실시간으로 불러왔어요.</p></div>
+        <div class="hero"><div class="eyebrow">이번 주 현황</div><h1>안녕하세요.</h1><p class="sub">오늘 볼 것과 이번 주 매장 현황·순위·주의 매장을 한눈에.</p></div>
         <div id="brief"></div>
         <div id="content"></div>
       </div>
@@ -370,10 +387,10 @@ html.dark{--fill:rgba(255,255,255,.055)}
       <div class="view" id="view-dash">
         <div class="hero"><div class="eyebrow">분석 · 코칭</div><h1>대시보드</h1><p class="sub">매장·사업부별로, 또는 담당자별로 달성률과 추이를 봅니다. 쌓인 데이터에서 이번 주 액션을 뽑아줘요.</p></div>
         <div class="dbar">
-          <span class="dlbl">보기</span>
-          <div class="dtog"><button id="dt-unit" class="on" onclick="setScope('unit')">매장·사업부별</button><button id="dt-person" onclick="setScope('person')">담당자별</button></div>
-          <span class="dlbl" style="margin-left:8px">대상</span>
-          <select id="dTarget" onchange="renderDash()"></select>
+          <div class="dgroup" id="dgScope"><span class="dlbl">보기</span>
+          <div class="dtog"><button id="dt-unit" class="on" onclick="setScope('unit')">매장·사업부별</button><button id="dt-person" onclick="setScope('person')">담당자별</button></div></div>
+          <div class="dgroup"><span class="dlbl">대상</span>
+          <select id="dTarget" onchange="renderDash()"></select></div>
         </div>
         <div id="dashBody"></div>
       </div>
@@ -474,7 +491,34 @@ async function loadData(){const[{data:u},{data:m},{data:us},{data:asn}]=await Pr
 const uName=id=>{const u=(UNITS.find(x=>x.id===id));return u?(u.name||id):id;};
 const pName=id=>{const u=(USERS.find(x=>x.id===id));return u?(u.name||u.email||id):id;};
 
-async function renderOverview(){try{const{data:brands}=await sb.from('brands').select('*').eq('active',true).order('id');const stores=UNITS.filter(u=>u.type==='fnb'),divisions=UNITS.filter(u=>u.type==='division'),byBrand=id=>stores.filter(u=>u.brand_id===id);let h='<div class="tiles">'+tile('브랜드',(brands||[]).length,'개')+tile('매장 · 사업부',UNITS.length,'개')+tile('관리 지표',METRICS.length,'개')+'</div>';h+='<div class="sec"><div class="sh">F&amp;B 브랜드</div><div class="brands">';(brands||[]).forEach(b=>{h+='<div class="bcard"><div class="bn">'+esc(b.name)+'<span class="badge">'+byBrand(b.id).length+'개 매장</span></div><div class="stores">'+byBrand(b.id).map(s=>'<span class="store">'+esc(s.store_name||s.name)+'</span>').join('')+'</div></div>';});h+='</div></div>';h+='<div class="sec"><div class="sh">사업부</div><div class="divs">'+divisions.map(d=>'<div class="dchip">'+esc(d.name)+'<span class="t">'+esc(d.id)+'</span></div>').join('')+'</div></div>';$('content').innerHTML=h;}catch(e){$('content').innerHTML='<div class="err">불러오기 실패: '+esc(e.message||e)+'</div>';}}
+async function renderOverview(){const el=$('content');if(!el)return;el.innerHTML='<div class="empty">이번 주 현황 불러오는 중…</div>';try{
+  const unitIds=UNITS.map(u=>u.id);
+  const {data:measAll}=await sb.from('measurements').select('unit_id,metric_id,period_key,target_value,actual_value').eq('grain','week').in('unit_id',unitIds);
+  const meas=measAll||[];
+  const {data:rvAll}=await sb.from('weekly_reviews').select('unit_id').eq('iso_week',THISWEEK);
+  const submitted=new Set((rvAll||[]).map(r=>r.unit_id));
+  if(!meas.length){el.innerHTML='<div class="empty">아직 주간 데이터가 없어요. 매장에서 주간 입력이 쌓이면 여기 현황·순위·주의 매장이 나타나요.</div>';return;}
+  const weeks=[...new Set(meas.map(m=>m.period_key))].sort();const latestWk=weeks[weeks.length-1],prevWk=weeks[weeks.length-2];
+  const byU={};meas.forEach(m=>{(byU[m.unit_id]=byU[m.unit_id]||[]).push(m);});
+  const uAvg=(uid,wk)=>{const ps=(byU[uid]||[]).filter(m=>m.period_key===wk).map(m=>achPct(m.target_value,m.actual_value)).filter(v=>v!=null);return ps.length?avgClamped(ps):null;};
+  const withLatest=Object.keys(byU).filter(uid=>byU[uid].some(m=>m.period_key===latestWk));
+  const A=withLatest.map(uid=>uAvg(uid,latestWk)).filter(v=>v!=null);const avgNow=A.length?Math.round(A.reduce((a,b)=>a+b,0)/A.length):null;
+  const P=withLatest.map(uid=>uAvg(uid,prevWk)).filter(v=>v!=null);const avgPrev=P.length?Math.round(P.reduce((a,b)=>a+b,0)/P.length):null;
+  const delta=(avgNow!=null&&avgPrev!=null)?avgNow-avgPrev:null;
+  let sT=0,sA=0;meas.filter(m=>m.period_key===latestWk&&m.metric_id==='sales').forEach(m=>{if(m.target_value!=null)sT+=Number(m.target_value);if(m.actual_value!=null)sA+=Number(m.actual_value);});
+  let h='<div class="tiles">';
+  h+='<div class="tile"><div class="k">이번주 평균 달성률</div><div class="v">'+(avgNow==null?'—':avgNow)+(avgNow==null?'':'<small> %</small>')+'</div>'+(delta!=null?'<div class="tdelta '+(delta>=0?'up':'down')+'">'+(delta>=0?'▲ ':'▼ ')+Math.abs(delta)+'%p</div>':'')+'</div>';
+  h+='<div class="tile"><div class="k">이번주 매출</div><div class="v" style="font-size:19px">'+wonShort(sA)+'<small> / '+wonShort(sT)+'</small></div></div>';
+  h+='<div class="tile"><div class="k">주간 리뷰 제출</div><div class="v">'+submitted.size+'<small> / '+UNITS.length+'</small></div></div>';
+  h+='</div><div style="margin-top:8px;color:var(--ink3);font-size:12px">기준 주차: '+esc(latestWk)+'</div>';
+  const attn=[];withLatest.forEach(uid=>{const a=uAvg(uid,latestWk);if(a!=null&&a<90)attn.push({uid,r:'달성률 '+a+'%',bad:true});});
+  UNITS.forEach(u=>{if(!submitted.has(u.id))attn.push({uid:u.id,r:'주간 리뷰 미제출',bad:false});});
+  const seen={};const au=attn.filter(x=>seen[x.uid]?false:(seen[x.uid]=true));
+  h+='<div class="sh" style="margin-top:24px">주의가 필요한 매장</div>';
+  h+=au.length?('<div class="attnwrap">'+au.slice(0,6).map(x=>'<div class="attn"><span class="adot '+(x.bad?'bad':'warn')+'"></span><span class="aname">'+esc(uName(x.uid))+'</span><span class="ar">'+esc(x.r)+'</span></div>').join('')+'</div>'):'<div class="empty">지금은 특별히 주의할 매장이 없어요. 좋아요.</div>';
+  h+=leaderboard(meas);
+  el.innerHTML=h;
+}catch(e){el.innerHTML='<div class="err">현황 불러오기 실패: '+esc(e.message||e)+'</div>';}}
 function tile(k,v,u){return '<div class="tile"><div class="k">'+k+'</div><div class="v">'+v+'<small> '+u+'</small></div></div>';}
 
 function buildUnitSelect(){$('fUnit').innerHTML=UNITS.map(u=>'<option value="'+u.id+'">'+esc(u.name)+'</option>').join('');}
@@ -740,7 +784,7 @@ async function showSaved(unit_id){
 
 /* ===== 대시보드 ===== */
 function setScope(s){if(ROLE!=='owner'&&ROLE!=='manager')return;DSCOPE=s;$('dt-unit').classList.toggle('on',s==='unit');$('dt-person').classList.toggle('on',s==='person');buildDashTarget();renderDash();}
-function buildDashTarget(){const sel=$('dTarget');const admin=(ROLE==='owner'||ROLE==='manager');const tg=document.querySelector('#view-dash .dtog');if(!admin){DSCOPE='person';sel.innerHTML='<option value="'+SESSION.user.id+'">'+esc(myName())+' (나)</option>';sel.value=SESSION.user.id;sel.disabled=true;if(tg)tg.style.display='none';return;}sel.disabled=false;if(tg)tg.style.display='';if(DSCOPE==='unit'){sel.innerHTML='<option value="ALL">전체 (매장·사업부)</option>'+UNITS.map(u=>'<option value="'+u.id+'">'+esc(u.name)+'</option>').join('');}else{sel.innerHTML=USERS.map(u=>'<option value="'+u.id+'">'+esc(u.name||u.email)+'</option>').join('');if(SESSION&&USERS.some(u=>u.id===SESSION.user.id))sel.value=SESSION.user.id;}}
+function buildDashTarget(){const sel=$('dTarget');const admin=(ROLE==='owner'||ROLE==='manager');const tg=document.getElementById('dgScope');if(!admin){DSCOPE='person';sel.innerHTML='<option value="'+SESSION.user.id+'">'+esc(myName())+' (나)</option>';sel.value=SESSION.user.id;sel.disabled=true;if(tg)tg.style.display='none';return;}sel.disabled=false;if(tg)tg.style.display='';if(DSCOPE==='unit'){sel.innerHTML='<option value="ALL">전체 (매장·사업부)</option>'+UNITS.map(u=>'<option value="'+u.id+'">'+esc(u.name)+'</option>').join('');}else{sel.innerHTML=USERS.map(u=>'<option value="'+u.id+'">'+esc(u.name||u.email)+'</option>').join('');if(SESSION&&USERS.some(u=>u.id===SESSION.user.id))sel.value=SESSION.user.id;}}
 function empty(t){return '<div class="emptybig">'+esc(t)+'</div>';}
 function achPct(t,a){return (t!=null&&a!=null&&Number(t)!==0)?(Number(a)/Number(t)*100):null;}
 function achClass(p){if(p==null)return 'na';if(p>=100)return 'ok';if(p>=90)return 'warn';return 'bad';}
