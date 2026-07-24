@@ -559,11 +559,11 @@ body.previewing #pvBanner a{color:#fff;text-decoration:underline;cursor:pointer;
         <div class="fcard">
           <div class="ft">② 지난주 돌아보기 <span class="opt">선택</span></div>
           <div class="fdesc">비워도 되지만, 적을수록 코칭이 날카로워져요.</div>
-          <div class="frow"><label>목표 대비 결과 한 줄 평</label><input type="text" id="result_comment" placeholder="지난주를 한 줄로 평가하면?"></div>
-          <div class="frow"><label>지난주 실제 실행한 일 (3개 이내)</label><textarea id="done_text" placeholder="1. …&#10;2. …"></textarea></div>
-          <div class="frow"><label>목표를 못 이뤘다면, 가장 큰 이유는?</label><input type="text" id="miss_reason" placeholder="미달 이유"></div>
-          <div class="frow"><label>현재 가장 큰 문제 1가지</label><input type="text" id="biggest_problem" placeholder="가장 큰 문제"></div>
-          <div class="frow"><label>그 문제가 생긴 원인은?</label><textarea id="problem_cause" placeholder="원인"></textarea></div>
+          <div class="frow"><label>지난주 실제로 한 일</label><div class="fdesc" style="margin:2px 0 8px">완료 체크한 일별 계획이 자동으로 들어와요. 빠진 게 있으면 추가·수정하세요.</div><textarea id="done_text" placeholder="지난주에 한 일 (완료한 일별 계획이 자동으로 채워져요)"></textarea></div>
+          <div class="frow"><label>지난주에 가장 잘한 것 하나</label><input type="text" id="result_comment" placeholder="숫자로 안 드러나는 성과·변화도 좋아요"></div>
+          <div class="frow"><label>목표에 못 미친 부분이 있다면, 무엇이 걸림돌이었나요?</label><input type="text" id="miss_reason" placeholder="목표를 막은 가장 큰 걸림돌"></div>
+          <div class="frow"><label>지금 가장 걸리는 문제 (있다면)</label><input type="text" id="biggest_problem" placeholder="지금 매장에서 가장 신경 쓰이는 문제"></div>
+          <div class="frow"><label>그 문제, 왜 생겼다고 보세요? <span class="opt">짐작·가설이라도</span></label><textarea id="problem_cause" placeholder="원인을 짐작만 해도 코칭이 날카로워져요"></textarea></div>
         </div>
 
         <div class="fcard">
@@ -708,6 +708,7 @@ async function onUnitChange(){
   }
   // 서술형: 이번주에 이미 저장한 답이 있으면 복원
   await restoreReview(u);
+  await loadDoneRecall(u);
 }
 
 async function restoreReview(u){
@@ -1104,6 +1105,15 @@ async function loadDayPlanDraft(uid){
   buildDayTabs();
 }
 async function delPlan(btn,ev){if(ev){ev.preventDefault();ev.stopPropagation();}var id=btn.getAttribute('data-id');try{await sb.from('plans').delete().eq('id',id);}catch(e){}var c=window.__execCtx;if(c)renderTodayPlan(c.uid,c.date);}
+async function loadDoneRecall(uid){
+  var el=$('done_text');if(!el)return;
+  if(el.value&&el.value.trim())return;
+  var lw=weekDates(addDaysStr(fmtD(new Date()),-7));
+  try{const r=await sb.from('plans').select('text,plan_date').eq('unit_id',uid).eq('scope','day').gte('plan_date',lw[0]).lte('plan_date',lw[6]).eq('done',true).order('plan_date');
+    var items=(r.data||[]).map(function(p){return p.text;});
+    if(items.length)el.value=items.map(function(t){return '· '+t;}).join('\n');
+  }catch(e){}
+}
 function fmsg(t,k){const e=$('fmsg');e.className='fmsg'+(k?(' '+k):'');e.textContent=t||'';}
 
 $('submitBtn').onclick=async()=>{
