@@ -406,6 +406,10 @@ body.previewing #pvBanner a{color:#fff;text-decoration:underline;cursor:pointer;
 .dsec-b .sh:first-child{margin-top:0!important}
 .dsec-b .dgrid,.dsec-b .atable{margin-top:0}
 </style>
+<style id="u9">
+.coachcard,.coachcard.portfolio{border-left:1px solid var(--line)}
+#homeTitle:empty{display:none}
+</style>
 </head>
 <body>
   <div class="authwrap" id="auth">
@@ -468,10 +472,10 @@ body.previewing #pvBanner a{color:#fff;text-decoration:underline;cursor:pointer;
         <div class="dbar">
           <div class="dgroup" id="dgScope"><span class="dlbl">보기</span>
           <div class="dtog"><button id="dt-unit" class="on" onclick="setScope('unit')">매장·사업부별</button><button id="dt-person" onclick="setScope('person')">담당자별</button></div></div>
-          <div class="dgroup" style="display:none"><span class="dlbl">대상</span>
+          <div class="dgroup"><span class="dlbl">대상</span>
           <select id="dTarget" onchange="renderDash()"></select></div>
         </div>
-        <div class="dtabs" id="dTargetTabs"></div><div id="dashBody"></div>
+        <div id="dashBody"></div>
       </div>
 
       <div class="view" id="view-input">
@@ -791,12 +795,12 @@ async function renderDayWeek(u,dateStr){
   el.innerHTML=h;
   return {sumS,target,pct,todayS,yS};
 }
-async function dSection(t,inner,open){return '<details class="dsec"'+(open?' open':'')+'><summary>'+esc(t)+'</summary><div class="dsec-b">'+inner+'</div></details>';}
+function dSection(t,inner,open){return '<details class="dsec"'+(open?' open':'')+'><summary>'+esc(t)+'</summary><div class="dsec-b">'+inner+'</div></details>';}
 function dashUnitTab(uid){var b=document.getElementById('dashBody');if(!b)return;[].slice.call(b.querySelectorAll('.unitpane')).forEach(function(p){p.style.display=(p.getAttribute('data-uid')===uid)?'':'none';});[].slice.call(b.querySelectorAll('#unittabs .utab')).forEach(function(x){x.classList.toggle('on',x.getAttribute('data-uid')===uid);});var t=document.getElementById('unittabs');if(t)t.scrollIntoView({behavior:'smooth',block:'start'});}
 function uhCoachTab(uid){[].slice.call(document.querySelectorAll('#content .uhcoachpane')).forEach(function(p){p.style.display=(p.getAttribute('data-uid')===uid)?'':'none';});[].slice.call(document.querySelectorAll('#uhCoachTabs .utab')).forEach(function(x){x.classList.toggle('on',x.getAttribute('data-uid')===uid);});}
 function buildDashTabs(){var wrap=document.getElementById('dTargetTabs');var sel=document.getElementById('dTarget');if(!wrap||!sel)return;var opts=[].slice.call(sel.options);if(opts.length<=1){wrap.style.display='none';wrap.innerHTML='';return;}wrap.style.display='';wrap.innerHTML=opts.map(function(o){return '<button class="dtab'+(o.value===sel.value?' on':'')+'" data-val="'+esc(o.value)+'" onclick="pickDashTarget(this.dataset.val)">'+esc(o.textContent)+'</button>';}).join('');}
 function pickDashTarget(v){var sel=document.getElementById('dTarget');if(!sel)return;sel.value=v;[].slice.call(document.querySelectorAll('#dTargetTabs .dtab')).forEach(function(b){b.classList.toggle('on',b.getAttribute('data-val')===v);});renderDash();}
-function renderHome(){if(isAdmin()){renderMorningBrief();renderOverview();}else{renderUserHome();}}
+function renderHome(){var _t=$('homeTitle');if(isAdmin()){if(_t)_t.textContent='';renderMorningBrief();renderOverview();}else{renderUserHome();}}
 
 async function renderUserHome(){
   const el=$('content');if(!el||!SESSION)return;
@@ -810,10 +814,10 @@ async function renderUserHome(){
   const myUnits=[...new Set((ASSIGNS||[]).filter(a=>a.user_id===SESSION.user.id).map(a=>a.unit_id))];
   if(!myUnits.length){el.innerHTML='<div class="uh-onb"><div class="uh-onb-t">아직 담당 매장이 연결되지 않았어요</div><div class="uh-onb-s">관리자가 매장을 배정하거나, 아래 입력 탭에서 주간 입력을 시작하면 여기에서 코칭·현황·인사이트를 볼 수 있어요.</div></div>';return;}
   const today=fmtD(new Date());let out='';
-  try{out+=await uhToday(myUnits[0],today);}catch(e){}
+  try{out+=await uhToday(myUnits[0],today);}catch(e){}try{out+=await uhSnapshot(myUnits[0],today);}catch(e){}
   out+='<div class="uh-sh">나를 위한 코칭</div>';
   if(myUnits.length>1)out+='<div class="unittabs" id="uhCoachTabs">'+myUnits.map(function(uid,i){return '<button class="utab'+(i===0?' on':'')+'" data-uid="'+esc(uid)+'" onclick="uhCoachTab(this.dataset.uid)">'+esc(uName(uid))+'</button>';}).join('')+'</div>';myUnits.forEach(function(uid,i){out+='<div class="uhcoachpane" data-uid="'+esc(uid)+'"'+(myUnits.length>1&&i>0?' style="display:none"':'')+'><div class="coachwrap" id="coach-'+esc(uid)+'"><div class="coach-load">이번 주 코칭 불러오는 중…</div></div></div>';});
-  try{out+=await uhSnapshot(myUnits[0],today);}catch(e){}
+  
   try{out+=await uhSignals(myUnits[0],today);}catch(e){}
   out+=uhTips();
   el.innerHTML=out;
@@ -1009,8 +1013,8 @@ async function renderDash(){
   const latestPcts=meas.filter(m=>m.period_key===latestWk).map(m=>achPct(m.target_value,m.actual_value)).filter(v=>v!=null);
   const avgAch=avgClamped(latestPcts);
   const nMetrics=new Set(meas.map(m=>m.metric_id)).size;
-  let h='<div class="tiles">'+tile('최근 주 평균 달성률',avgAch==null?'—':avgAch,avgAch==null?'':'%')+tile('추적 지표',nMetrics,'개')+tile('데이터 주차',weeks.length,'주')+'</div>';
-  if(latestWk)h+='<div style="margin-top:8px;color:var(--ink3);font-size:12.5px">기준 주차: '+esc(latestWk)+'</div>';
+  let h='';
+  
   const coachItems=[];window.__portfolioCtx=null;
   if(DSCOPE==='unit'&&tgt==='ALL'){h+=leaderboard(meas);}
   else{const byU={};meas.forEach(m=>{(byU[m.unit_id]=byU[m.unit_id]||[]).push(m);});const keys=Object.keys(byU).sort();const multi=keys.length>1;
@@ -1025,11 +1029,11 @@ async function renderDash(){
       h+=dSection('주차별 달성률',achTable(byU[uid]),false);
       var _pnl=pnlBlock(byU[uid],uid);if(_pnl)h+=dSection('예상 손익',_pnl.replace(/^<div class="sh"[^>]*>[\s\S]*?<\/div>/,''),false);
       h+=dSection('실행 과제','<div id="tasks-'+esc(uid)+'"><div class="empty">과제 불러오는 중…</div></div>',false);
-      h+=dSection('일간 흐름 · 이슈 · 컨디션','<div id="daily-'+esc(uid)+'"><div class="empty">일간 데이터 불러오는 중…</div></div>',false);h+='</div>';
+      h+=dSection('일간 흐름 · 이슈 · 컨디션','<div id="daily-'+esc(uid)+'"><div class="empty">일간 데이터 불러오는 중…</div></div>',false);var _ui=computeInsights(byU[uid],revs.filter(function(r){return r.unit_id===uid;}));h+=dSection('빠른 신호',_ui.length?_ui.map(insCard).join(''):'<div class="empty">아직 신호로 잡을 데이터가 부족해요.</div>',true);h+='</div>';
     });}
-  h+='<div class="sh" style="margin-top:28px">빠른 신호</div>';
-  const ins=computeInsights(meas,revs);
-  h+=ins.length?ins.map(insCard).join(''):'<div class="empty">아직 신호로 잡을 데이터가 부족해요. 몇 주 더 쌓이면 패턴이 보여요.</div>';
+  
+  
+  
   body.innerHTML=h;
   if(window.__portfolioCtx)loadPortfolio(window.__portfolioCtx);
   if(coachItems.length){loadCoachings(coachItems);loadTasksDash(coachItems);loadDailyDash(coachItems);}
