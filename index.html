@@ -470,6 +470,10 @@ body.previewing #pvBanner a{color:#fff;text-decoration:underline;cursor:pointer;
 .exec-x{border:none;background:none;color:var(--ink3);font-size:17px;cursor:pointer;padding:0 2px 0 6px;line-height:1;flex-shrink:0}
 .exec-x:hover{color:var(--red)}
 </style>
+<style id="u14">
+.exec-day{font-size:10.5px;font-weight:700;color:var(--ink3);background:var(--fill);padding:3px 7px;border-radius:7px;flex-shrink:0}
+.exec-item .exec-tx{margin-left:1px}
+</style>
 </head>
 <body>
   <div class="authwrap" id="auth">
@@ -571,23 +575,13 @@ body.previewing #pvBanner a{color:#fff;text-decoration:underline;cursor:pointer;
 
         <div class="fcard">
           <div class="ft">④ 이번 주 계획</div>
-          <div class="frow"><label>이번 주 최우선 1가지 <span class="core">필수</span></label><input type="text" id="top_priority" placeholder="이번 주 딱 하나, 반드시 할 것"></div>
-          <div class="frow"><label>이번 주 무엇을 실행할 예정? <span class="opt">선택</span></label><textarea id="plan_text" placeholder="실행 계획"></textarea></div>
-          <div class="frow"><label>누군가에게 지시·요청한 일 <span class="opt">선택</span></label><input type="text" id="delegation_text" placeholder="위임한 일 (담당·기한)"></div>
-          <div class="frow"><label>지원이 필요한 사항 <span class="opt">선택</span></label><input type="text" id="support_text" placeholder="필요한 지원"></div>
-          <div class="frow"><label>대표의 결정이 필요한 사항 <span class="opt">선택</span></label><input type="text" id="decision_text" placeholder="결정이 필요한 안건"></div>
+          <div class="frow"><label>이번 주 목표 <span class="core">필수</span></label><input type="text" id="top_priority" placeholder="이번 주 반드시 이룰 목표 하나"></div>
+          <div class="frow"><label>이번 주 주간 실행 계획 <span class="opt">선택</span></label><div class="fdesc" style="margin:2px 0 8px">일별 계획 말고, 이번 주에 걸쳐 진행할 큰 계획이에요.</div><textarea id="plan_text" placeholder="예: 신메뉴 준비, 채용 진행, 인테리어 보수 등"></textarea></div>
+          
         </div>
 
         <div class="fcard">
-          <div class="ft">④-1 이번 주 실행 과제 <span class="opt">선택</span></div>
-          <div class="fdesc">위임·계획을 '과제'로 만들면 다음 주에 완료 여부가 자동 대조되고, 코칭이 '책임 추적'에 이걸 씁니다. (담당·기한은 비워도 돼요.)</div>
-          <div class="mhead" style="grid-template-columns:2fr 1.1fr 1fr"><div>할 일</div><div>담당</div><div>기한</div></div>
-          <div id="taskRows"></div>
-          <button type="button" class="addm" onclick="addTaskRow()">+ 과제 추가</button>
-        </div>
-
-        <div class="fcard">
-          <div class="ft">④-2 이번 주 일별 계획 <span class="opt">선택</span></div>
+          <div class="ft">④-1 이번 주 일별 계획 <span class="opt">선택</span></div>
           <div class="fdesc">요일별로 할 일을 미리 정해두면, 매일 '오늘' 탭에 그날 계획이 자동으로 떠요. 완료 못한 항목은 다음 날로 자동 이월돼요.</div>
           <div class="daytabs" id="dpTabs"></div>
           <div id="dpItems"></div>
@@ -595,7 +589,15 @@ body.previewing #pvBanner a{color:#fff;text-decoration:underline;cursor:pointer;
         </div>
 
         <div class="fcard">
-          <div class="ft">⑤ 성찰 · 요약 <span class="opt">선택</span></div>
+          <div class="ft">⑤ 대표에게 요청·공유 <span class="opt">선택</span></div>
+          <div class="fdesc">혼자 못 푸는 건 위로 올려요. 대표가 이번 주에 알아야 할 요청·결정거리예요.</div>
+          <div class="frow"><label>대표·본사에 요청할 지원</label><input type="text" id="support_text" placeholder="인력·예산·장비 등 위에서 도와줘야 풀리는 것"></div>
+          <div class="frow"><label>대표 결정이 필요한 안건</label><input type="text" id="decision_text" placeholder="나 혼자 못 정해서 대표 판단이 필요한 것"></div>
+          <div class="frow" style="margin-bottom:0"><label>팀에 위임·지시한 일</label><input type="text" id="delegation_text" placeholder="이번 주 팀원에게 맡긴 일 (담당·기한)"></div>
+        </div>
+
+        <div class="fcard">
+          <div class="ft">⑥ 성찰 · 요약 <span class="opt">선택</span></div>
           <div class="frow"><label>내 돈 100%로 운영하는 사업이라면, 이번 주 뭘 다르게 했을까?</label><textarea id="reflection" placeholder="성찰"></textarea></div>
           <div class="frow"><label>이번 주 사업 상태를 한 문장으로</label><input type="text" id="one_line_summary" placeholder="한 줄 요약"></div>
           
@@ -706,8 +708,6 @@ async function onUnitChange(){
   }
   // 서술형: 이번주에 이미 저장한 답이 있으면 복원
   await restoreReview(u);
-  // 실행 과제: 이번주 저장분 복원
-  await loadTaskInput(u);
 }
 
 async function restoreReview(u){
@@ -1069,7 +1069,7 @@ async function renderTodayPlan(uid,dateStr){
   let h='<div class="fcard exec"><div class="exec-h"><div class="ft" style="margin:0">오늘의 계획</div><span class="exec-streak">'+(streak>0?streak+'일 연속 실천':'오늘부터 실천')+'</span></div>';
   if(pct!=null)h+='<div class="exec-prog"><div class="exec-bar"><i style="width:'+pct+'%"></i></div><span class="exec-pct">이번 주 실천율 '+pct+'% <small>('+done+'/'+tot+' 완료)</small></span></div>';
   if(list.length){
-    h+='<div class="exec-list">'+list.map(function(it){var over=it.plan_date<dateStr;return '<label class="exec-item'+(it.done?' done':'')+'"><input type="checkbox" data-id="'+esc(it.id)+'" '+(it.done?'checked':'')+' onchange="togglePlan(this)"><span class="exec-tx">'+esc(it.text)+'</span>'+(over?'<span class="exec-carry">이월</span>':'')+'<button type="button" class="exec-x" data-id="'+esc(it.id)+'" onclick="delPlan(this,event)">×</button></label>';}).join('')+'</div>';
+    h+='<div class="exec-list">'+list.map(function(it){var over=it.plan_date<dateStr;var dow=['월','화','수','목','금','토','일'][(new Date(it.plan_date+'T00:00:00').getDay()+6)%7];return '<label class="exec-item'+(it.done?' done':'')+'"><input type="checkbox" data-id="'+esc(it.id)+'" '+(it.done?'checked':'')+' onchange="togglePlan(this)"><span class="exec-day">'+dow+'</span><span class="exec-tx">'+esc(it.text)+'</span>'+(over?'<span class="exec-carry">이월</span>':'')+'<button type="button" class="exec-x" data-id="'+esc(it.id)+'" onclick="delPlan(this,event)">×</button></label>';}).join('')+'</div>';
   }else{
     h+='<div class="exec-empty">오늘의 계획이 아직 없어요. 이번 주 계획에서 가져오거나 직접 추가해보세요.</div>';
   }
