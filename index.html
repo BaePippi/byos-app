@@ -487,7 +487,7 @@ body.previewing #pvBanner a{color:#fff;text-decoration:underline;cursor:pointer;
           <div class="dgroup" id="dgScope"><span class="dlbl">보기</span>
           <div class="dtog"><button id="dt-unit" class="on" onclick="setScope('unit')">매장·사업부별</button><button id="dt-person" onclick="setScope('person')">담당자별</button></div></div>
           <div class="dgroup"><span class="dlbl">대상</span>
-          <select id="dTarget" onchange="renderDash()"></select></div><div class="dgroup" id="dgPersonFilter" style="display:none"><span class="dlbl">담당자</span><select id="dPersonFilter" onchange="renderDash()"></select></div>
+          <select id="dTarget" onchange="renderDash()"></select></div>
         </div>
         <div id="dashBody"></div>
       </div>
@@ -582,7 +582,7 @@ function tr(m){if(/Invalid login/i.test(m))return '이메일 또는 비밀번호
 function setView(v){CURVIEW=v;['daily','home','dash','input'].forEach(x=>{var el=$('view-'+x);if(el)el.classList.toggle('on',v===x);});[].slice.call(document.querySelectorAll('#tabbar .tab')).forEach(function(b){b.classList.toggle('on',b.getAttribute('data-view')===v);});window.scrollTo({top:0,behavior:'smooth'});if(v==='dash')renderDash();if(v==='daily')renderDaily();if(v==='home')renderHome();}
 
 sb.auth.onAuthStateChange((_e,s)=>render(s));
-async function render(session){SESSION=session;if(session){if(window.__rf===session.user.id)return;window.__rf=session.user.id;$('auth').style.display='none';$('app').style.display='block';$('uemail').textContent=session.user.email;$('authBtn').disabled=false;$('weekLabel').textContent=THISWEEK+' 입력';await loadData();ROLE=(USERS.find(u=>u.id===session.user.id)||{}).role||'partner';buildTabs(effRole());var _pb=document.getElementById('previewBtn');if(_pb)_pb.style.display=realAdmin()?'':'none';setTopdate();applyThemeIcon();renderHome();buildUnitSelect();buildDailyUnitSelect();buildDashTarget();buildDashTabs();buildPersonFilter();await onUnitChange();if(!window.__booted){window.__booted=true;setView('home');}}else{window.__booted=false;window.__rf=null;$('app').style.display='none';$('auth').style.display='flex';}}
+async function render(session){SESSION=session;if(session){if(window.__rf===session.user.id)return;window.__rf=session.user.id;$('auth').style.display='none';$('app').style.display='block';$('uemail').textContent=session.user.email;$('authBtn').disabled=false;$('weekLabel').textContent=THISWEEK+' 입력';await loadData();ROLE=(USERS.find(u=>u.id===session.user.id)||{}).role||'partner';buildTabs(effRole());var _pb=document.getElementById('previewBtn');if(_pb)_pb.style.display=realAdmin()?'':'none';setTopdate();applyThemeIcon();renderHome();buildUnitSelect();buildDailyUnitSelect();buildDashTarget();buildDashTabs();await onUnitChange();if(!window.__booted){window.__booted=true;setView('home');}}else{window.__booted=false;window.__rf=null;$('app').style.display='none';$('auth').style.display='flex';}}
 
 async function loadData(){const[{data:u},{data:m},{data:us},{data:asn}]=await Promise.all([sb.from('units').select('*').eq('active',true).order('id'),sb.from('metrics').select('id,name,uom,category').eq('active',true).order('category'),sb.from('users').select('id,name,email,role').eq('active',true),sb.from('assignments').select('user_id,unit_id')]);UNITS=u||[];METRICS=m||[];USERS=us||[];ASSIGNS=asn||[];}
 const uName=id=>{const u=(UNITS.find(x=>x.id===id));return u?(u.name||id):id;};
@@ -1047,7 +1047,7 @@ async function showSaved(unit_id){
 }
 
 /* ===== 대시보드 ===== */
-function setScope(s){if(!isAdmin())return;DSCOPE=s;$('dt-unit').classList.toggle('on',s==='unit');$('dt-person').classList.toggle('on',s==='person');buildDashTarget();buildDashTabs();buildPersonFilter();renderDash();}
+function setScope(s){if(!isAdmin())return;DSCOPE=s;$('dt-unit').classList.toggle('on',s==='unit');$('dt-person').classList.toggle('on',s==='person');buildDashTarget();buildDashTabs();renderDash();}
 function buildDashTarget(){const sel=$('dTarget');const admin=isAdmin();const tg=document.getElementById('dgScope');if(!admin){DSCOPE='person';sel.innerHTML='<option value="'+SESSION.user.id+'">'+esc(myName())+' (나)</option>';sel.value=SESSION.user.id;sel.disabled=true;if(tg)tg.style.display='none';var _pfg=document.getElementById('dgPersonFilter');if(_pfg)_pfg.style.display='none';return;}sel.disabled=false;if(tg)tg.style.display='';if(DSCOPE==='unit'){sel.innerHTML='<option value="ALL">전체 (매장·사업부)</option>'+UNITS.map(u=>'<option value="'+u.id+'">'+esc(u.name)+'</option>').join('');}else{sel.innerHTML='<option value="ALLP">전체 담당자</option>'+USERS.map(u=>'<option value="'+u.id+'">'+esc(u.name||u.email)+'</option>').join('');sel.value='ALLP';}}
 function empty(t){return '<div class="emptybig">'+esc(t)+'</div>';}
 function achPct(t,a){return (t!=null&&a!=null&&Number(t)!==0)?(Number(a)/Number(t)*100):null;}
@@ -1059,7 +1059,7 @@ async function renderDash(){
   if(!SESSION)return;
   const body=$('dashBody');body.innerHTML='<div class="emptybig">불러오는 중…</div>';
   const tgt=$('dTarget').value;let unitIds=[],personId=null;
-  if(DSCOPE==='unit'){if(tgt==='ALL'){var _pf=$('dPersonFilter')?$('dPersonFilter').value:'ALL';if(_pf&&_pf!=='ALL'){var _ps=new Set(ASSIGNS.filter(a=>a.user_id===_pf).map(a=>a.unit_id));unitIds=UNITS.filter(u=>_ps.has(u.id)).map(u=>u.id);}else unitIds=UNITS.map(u=>u.id);}else unitIds=[tgt];}
+  if(DSCOPE==='unit'){unitIds=(tgt==='ALL')?UNITS.map(u=>u.id):[tgt];}
   else if(tgt==='ALLP'){personId=null;unitIds=UNITS.map(u=>u.id);}else{personId=tgt;const fromAsn=ASSIGNS.filter(a=>a.user_id===tgt).map(a=>a.unit_id);const {data:wr}=await sb.from('weekly_reviews').select('unit_id').eq('user_id',tgt);unitIds=[...new Set([...fromAsn,...(wr||[]).map(r=>r.unit_id)])];}
   if(!unitIds.length){body.innerHTML=empty('아직 연결된 매장·데이터가 없어요. 담당 배정이나 주간 입력이 쌓이면 여기에 나타나요.');return;}
   const {data:measAll}=await sb.from('measurements').select('unit_id,metric_id,period_key,target_value,actual_value').eq('grain','week').in('unit_id',unitIds);
@@ -1214,7 +1214,7 @@ async function loadPortfolio(p){
   el.innerHTML='<div class="coach-load">담당 매장 종합 코칭 생성 중… (매장 여러 곳을 한 번에 읽어요, 몇 초)</div>';
   try{
     const pname=p.label||((USERS.find(u=>u.id===p.personId)||{}).name||'');
-    const{data,error}=await sb.functions.invoke('coach',{body:{scope:'portfolio',unit_ids:p.units,iso_week:p.wk,person_name:pname}});
+    const _kind=(p.personId==='__ALLU__'||p.personId==='__ALLP__')?'org':'person';const{data,error}=await sb.functions.invoke('coach',{body:{scope:'portfolio',unit_ids:p.units,iso_week:p.wk,person_name:pname,kind:_kind}});
     if(error)throw error;
     if(data&&data.coaching){const payload={...data.coaching,_engine:data.engine};el.innerHTML=portfolioHtml(payload,p);try{await sb.from('coachings').upsert({unit_id:cacheId,iso_week:p.wk,payload,engine:data.engine,updated_at:new Date().toISOString()},{onConflict:'unit_id,iso_week'});}catch(_){}}
     else el.innerHTML='<div class="coach-err">종합 코칭 실패'+(data&&data.error?': '+esc(data.error):'')+'</div>';
@@ -1223,8 +1223,9 @@ async function loadPortfolio(p){
 function portfolioHtml(c,p){
   if(!c)return '';
   const pats=(c.cross_patterns||[]).filter(Boolean);const per=(c.per_store||[]).filter(x=>x&&x.focus);
-  let h='<div class="coachcard portfolio"><div class="coach-h"><span class="coach-badge" style="background:var(--blue)">종합 코칭</span><span class="coach-wk">'+esc(p.wk)+' · '+(p.label||('담당 '+p.units.length+'개 매장'))+'</span><button class="coach-refresh" onclick="refreshPortfolio()">⟳ 다시</button></div>';
-  if(c.priority_unit)h+='<div class="coach-diag">이번 주 최우선: <b>'+esc(c.priority_unit)+'</b>'+(c.priority_reason?' — '+esc(c.priority_reason):'')+'</div>';
+  let h='<div class="coachcard portfolio"><div class="coach-h"><span class="coach-badge" style="background:var(--blue)">'+(p.label?'전체 코칭':'담당자 코칭')+'</span><span class="coach-wk">'+esc(p.wk)+' · '+(p.label||('담당 '+p.units.length+'개 매장'))+'</span><button class="coach-refresh" onclick="refreshPortfolio()">⟳ 다시</button></div>';
+  if(c.lead_diagnosis)h+='<div class="coach-diag">'+esc(c.lead_diagnosis)+'</div>';
+  if(c.priority_unit)h+='<div class="coach-row"><div class="coach-lbl">우선 챙길 곳</div><div class="coach-val"><b>'+esc(c.priority_unit)+'</b>'+(c.priority_reason?' — '+esc(c.priority_reason):'')+'</div></div>';
   if(pats.length)h+='<div class="coach-actwrap"><div class="coach-lbl">매장을 가로지르는 패턴</div><ul class="coach-acts" style="list-style:disc">'+pats.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul></div>';
   if(c.portfolio_directive)h+='<div class="coach-row"><div class="coach-lbl">종합 지시</div><div class="coach-val"><b>'+esc(c.portfolio_directive)+'</b></div></div>';
   if(per.length)h+='<div class="coach-row"><div class="coach-lbl">매장별 초점</div><div class="coach-val">'+per.map(x=>'· <b>'+esc(x.unit)+'</b> — '+esc(x.focus)).join('<br>')+'</div></div>';
@@ -1293,8 +1294,8 @@ function achTable(rows){const weeks=[...new Set(rows.map(r=>r.period_key))].sort
 
 function leaderboard(meas){const byU={};meas.forEach(m=>{(byU[m.unit_id]=byU[m.unit_id]||[]).push(m);});
   const rows=Object.keys(byU).map(uid=>{const rs=byU[uid];const wks=[...new Set(rs.map(r=>r.period_key))].sort();const lw=wks[wks.length-1];const lp=rs.filter(r=>r.period_key===lw).map(r=>achPct(r.target_value,r.actual_value)).filter(v=>v!=null);const avg=avgClamped(lp);return {uid,lw,avg,n:new Set(rs.map(r=>r.metric_id)).size,weeks:wks.length};}).sort((a,b)=>(b.avg==null?-1:b.avg)-(a.avg==null?-1:a.avg));
-  let h='<div class="sh" style="margin-top:24px">매장·사업부 달성 현황</div><table class="atable"><thead><tr><th>매장·사업부</th><th>담당자</th><th>최근 주</th><th>평균 달성률</th></tr></thead><tbody>';
-  rows.forEach(r=>{const cls=r.avg==null?'':('cell-'+(r.avg>=100?'ok':r.avg>=90?'warn':'bad'));h+='<tr><td style="font-weight:600">'+esc(uName(r.uid))+'</td><td style="font-size:12px;color:var(--ink2)">'+esc(ownerNames(r.uid)||'—')+'</td><td>'+esc(r.lw||'—')+'</td><td class="'+cls+'">'+(r.avg==null?'—':achTxt(r.avg))+'</td></tr>';});
+  let h='<div class="sh" style="margin-top:24px">매장·사업부 달성 현황</div><table class="atable"><thead><tr><th>매장·사업부</th><th>평균 달성률</th></tr></thead><tbody>';
+  rows.forEach(r=>{const cls=r.avg==null?'':('cell-'+(r.avg>=100?'ok':r.avg>=90?'warn':'bad'));h+='<tr><td style="font-weight:600">'+esc(uName(r.uid))+'</td><td class="'+cls+'">'+(r.avg==null?'—':achTxt(r.avg))+'</td></tr>';});
   return h+'</tbody></table>';}
 
 function computeInsights(meas,reviews){const out=[];const byUM={};meas.forEach(m=>{const k=m.unit_id+'|'+m.metric_id;(byUM[k]=byUM[k]||[]).push(m);});
@@ -1323,7 +1324,7 @@ function togglePreview(){
   document.body.classList.toggle('previewing',PREVIEW);
   buildTabs(effRole());
   DSCOPE=PREVIEW?'person':'unit';
-  buildDashTarget();buildDashTabs();buildPersonFilter();
+  buildDashTarget();buildDashTabs();
   setView('home');
 }
 function buildTabs(role){var admin=(role==='owner'||role==='manager');var set=admin?['daily','home','dash','input']:['home','daily','dash','input'];var bar=$('tabbar');if(!bar)return;bar.innerHTML=set.map(function(v){return '<button class="tab" data-view="'+v+'" onclick="setView(\''+v+'\')">'+tabSvg(TABMETA[v].icon)+'<span>'+TABMETA[v].label+'</span></button>';}).join('');}
