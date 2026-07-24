@@ -474,6 +474,18 @@ body.previewing #pvBanner a{color:#fff;text-decoration:underline;cursor:pointer;
 .exec-day{font-size:10.5px;font-weight:700;color:var(--ink3);background:var(--fill);padding:3px 7px;border-radius:7px;flex-shrink:0}
 .exec-item .exec-tx{margin-left:1px}
 </style>
+<style id="u15">
+.dcoach{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:18px 20px;box-shadow:var(--card-sh)}
+.dcoach-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.dcoach-badge{font-size:11px;font-weight:700;letter-spacing:.04em;color:#fff;background:var(--grad);padding:5px 12px;border-radius:999px}
+.dcoach-status{font-size:14px;color:var(--ink2);font-weight:600;line-height:1.5;margin-bottom:14px}
+.dcoach-focus{background:var(--accent-weak);border-radius:14px;padding:14px 16px;margin-bottom:12px}
+.dcoach-k{font-size:11px;font-weight:700;color:var(--accent-2);letter-spacing:.03em;margin-bottom:5px}
+.dcoach-v{font-size:16px;font-weight:750;color:var(--ink);line-height:1.4}
+.dcoach-why{font-size:13px;color:var(--ink2);line-height:1.55;margin-bottom:10px}
+.dcoach-watch{font-size:12.5px;color:var(--amber);font-weight:600;margin-bottom:10px}
+.dcoach-enc{font-size:13px;color:var(--accent);font-weight:650;border-top:1px solid var(--line);margin-top:4px;padding-top:12px}
+</style>
 </head>
 <body>
   <div class="authwrap" id="auth">
@@ -932,12 +944,12 @@ async function renderUserHome(){
   const today=fmtD(new Date());let out='';
   try{out+=await uhToday(myUnits[0],today);}catch(e){}try{out+=await uhSnapshot(myUnits[0],today);}catch(e){}
   out+='<div class="uh-sh">나를 위한 코칭</div>';
-  if(myUnits.length>1)out+='<div class="unittabs" id="uhCoachTabs">'+myUnits.map(function(uid,i){return '<button class="utab'+(i===0?' on':'')+'" data-uid="'+esc(uid)+'" onclick="uhCoachTab(this.dataset.uid)">'+esc(uName(uid))+'</button>';}).join('')+'</div>';myUnits.forEach(function(uid,i){out+='<div class="uhcoachpane" data-uid="'+esc(uid)+'"'+(myUnits.length>1&&i>0?' style="display:none"':'')+'><div class="coachwrap" id="coach-'+esc(uid)+'"><div class="coach-load">이번 주 코칭 불러오는 중…</div></div></div>';});
+  if(myUnits.length>1)out+='<div class="unittabs" id="uhCoachTabs">'+myUnits.map(function(uid,i){return '<button class="utab'+(i===0?' on':'')+'" data-uid="'+esc(uid)+'" onclick="uhCoachTab(this.dataset.uid)">'+esc(uName(uid))+'</button>';}).join('')+'</div>';myUnits.forEach(function(uid,i){out+='<div class="uhcoachpane" data-uid="'+esc(uid)+'"'+(myUnits.length>1&&i>0?' style="display:none"':'')+'><div class="coachwrap" id="coach-'+esc(uid)+'"><div class="coach-load">오늘의 코칭 불러오는 중…</div></div></div>';});
   
   try{out+=await uhSignals(myUnits[0],today);}catch(e){}
   out+=uhTips();
   el.innerHTML=out;
-  try{loadCoachings(myUnits.map(uid=>({uid,wk:THISWEEK})));}catch(e){}
+  try{myUnits.forEach(function(uid){renderDailyCoach(uid,today);});}catch(e){}
 }
 
 async function uhToday(uid,dateStr){
@@ -1114,6 +1126,55 @@ async function loadDoneRecall(uid){
     if(items.length)el.value=items.map(function(t){return '· '+t;}).join('\n');
   }catch(e){}
 }
+async function computeDailyFacts(uid,date,iso){
+  var days=weekDates(date);var wkStart=days[0],wkEnd=days[6];
+  var yStr=addDaysStr(date,-1);
+  var priority=null,plan=null,problem=null;
+  try{const r=await sb.from('weekly_reviews').select('top_priority,plan_text,biggest_problem').eq('unit_id',uid).eq('iso_week',iso).order('submitted_at',{ascending:false}).limit(1);if(r.data&&r.data[0]){priority=r.data[0].top_priority;plan=r.data[0].plan_text;problem=r.data[0].biggest_problem;}}catch(e){}
+  var salesBy={};
+  try{const r=await sb.from('measurements').select('metric_id,period_key,actual_value').eq('unit_id',uid).eq('grain','day').gte('period_key',wkStart).lte('period_key',date);(r.data||[]).forEach(function(m){if(m.metric_id==='sales')salesBy[m.period_key]=Number(m.actual_value);});}catch(e){}
+  var wtarget=null;try{const r=await sb.from('measurements').select('target_value').eq('unit_id',uid).eq('grain','week').eq('period_key',iso).eq('metric_id','sales');if(r.data&&r.data[0]&&r.data[0].target_value!=null)wtarget=Number(r.data[0].target_value);}catch(e){}
+  var issues=[],conds=[];
+  try{const r=await sb.from('daily_notes').select('log_date,issue,condition').eq('unit_id',uid).gte('log_date',wkStart).lte('log_date',date).order('log_date');(r.data||[]).forEach(function(n){if(n.issue&&String(n.issue).trim())issues.push(String(n.issue).trim());if(n.condition!=null)conds.push(n.condition);});}catch(e){}
+  var pdone=0,ptot=0,today_planned=[];
+  try{const r=await sb.from('plans').select('plan_date,text,done').eq('unit_id',uid).eq('scope','day').gte('plan_date',wkStart).lte('plan_date',wkEnd);(r.data||[]).forEach(function(p){ptot++;if(p.done)pdone++;if(p.plan_date===date)today_planned.push(p.text);});}catch(e){}
+  var wkSales=Object.keys(salesBy).reduce(function(a,k){return a+(salesBy[k]||0);},0);
+  var di=(new Date(date+'T00:00:00').getDay()+6)%7;var daysLeft=7-di;
+  var remain=(wtarget!=null)?Math.max(0,wtarget-wkSales):null;
+  var pace=(remain!=null&&daysLeft>0)?Math.round(remain/daysLeft):null;
+  var yesterday=(salesBy[yStr]!=null)?salesBy[yStr]:null;
+  var dow=['월','화','수','목','금','토','일'][di];
+  var wonS=function(n){return n==null?null:(Math.abs(n)>=10000?Math.round(n/10000)+'만':String(n));};
+  return {unit_name:uName(uid),date:date,weekday:dow,priority:priority,weekly_plan:plan,known_problem:problem,
+    week_sales_so_far:wonS(wkSales),week_sales_target:wonS(wtarget),days_left:daysLeft,pace_needed:wonS(pace),
+    yesterday_sales:wonS(yesterday),recent_issues:issues.slice(-3),conditions:conds.slice(-5),
+    adherence:{done:pdone,total:ptot,pct:ptot?Math.round(pdone/ptot*100):0},today_planned:today_planned};
+}
+function dailyCoachHtml(c,uid,date){
+  if(!c)return '<div class="coach-err">코칭 내용이 비어 있어요.</div>';
+  var h='<div class="dcoach"><div class="dcoach-h"><span class="dcoach-badge">오늘의 코칭</span><button class="coach-refresh" data-uid="'+esc(uid)+'" data-date="'+esc(date)+'" onclick="refreshDailyCoach(this)">⟳ 다시</button></div>';
+  if(c.status_line)h+='<div class="dcoach-status">'+esc(c.status_line)+'</div>';
+  if(c.today_focus)h+='<div class="dcoach-focus"><div class="dcoach-k">오늘 집중할 것</div><div class="dcoach-v">'+esc(c.today_focus)+'</div></div>';
+  if(c.why)h+='<div class="dcoach-why">'+esc(c.why)+'</div>';
+  if(c.watch&&String(c.watch).trim())h+='<div class="dcoach-watch">주의 — '+esc(c.watch)+'</div>';
+  if(c.encourage)h+='<div class="dcoach-enc">'+esc(c.encourage)+'</div>';
+  return h+'</div>';
+}
+async function renderDailyCoach(uid,date){
+  var el=$('coach-'+uid);if(!el)return;
+  var iso=isoWeek(new Date(date+'T00:00:00'));
+  var cacheId='@daily:'+uid;
+  try{const r=await sb.from('coachings').select('payload').eq('unit_id',cacheId).eq('iso_week',date).maybeSingle();if(r.data&&r.data.payload){el.innerHTML=dailyCoachHtml(r.data.payload,uid,date);return;}}catch(e){}
+  el.innerHTML='<div class="coach-load">오늘의 코칭 생성 중… (몇 초)</div>';
+  try{
+    var facts=await computeDailyFacts(uid,date,iso);
+    const r=await sb.functions.invoke('coach',{body:{scope:'daily',unit_id:uid,date:date,facts:facts}});
+    if(r.error)throw r.error;
+    if(r.data&&r.data.coaching){var payload={...r.data.coaching,_engine:r.data.engine};el.innerHTML=dailyCoachHtml(payload,uid,date);try{await sb.from('coachings').upsert({unit_id:cacheId,iso_week:date,payload:payload,engine:r.data.engine,updated_at:new Date().toISOString()},{onConflict:'unit_id,iso_week'});}catch(e){}}
+    else el.innerHTML='<div class="coach-err">오늘 코칭을 만들지 못했어요'+(r.data&&r.data.error?': '+esc(r.data.error):'')+'</div>';
+  }catch(e){el.innerHTML='<div class="coach-err">코칭 호출 실패: '+esc(e.message||e)+'</div>';}
+}
+async function refreshDailyCoach(btn){var uid=btn.getAttribute('data-uid'),date=btn.getAttribute('data-date');var el=$('coach-'+uid);if(el)el.innerHTML='<div class="coach-load">오늘의 코칭 다시 생성 중…</div>';try{await sb.from('coachings').delete().eq('unit_id','@daily:'+uid).eq('iso_week',date);}catch(e){}renderDailyCoach(uid,date);}
 function fmsg(t,k){const e=$('fmsg');e.className='fmsg'+(k?(' '+k):'');e.textContent=t||'';}
 
 $('submitBtn').onclick=async()=>{
