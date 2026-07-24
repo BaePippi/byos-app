@@ -455,6 +455,21 @@ body.previewing #pvBanner a{color:#fff;text-decoration:underline;cursor:pointer;
 .exec-pull{font-size:12.5px;color:var(--accent);font-weight:600;cursor:pointer;text-align:center;padding:6px}
 .exec-pull:hover{text-decoration:underline}
 </style>
+<style id="u13">
+.daytabs{display:flex;gap:6px;overflow-x:auto;padding:2px 0 4px;margin-bottom:10px;scrollbar-width:none}
+.daytabs::-webkit-scrollbar{display:none}
+.daytab{flex-shrink:0;min-width:46px;padding:9px 10px;border-radius:11px;border:1px solid var(--line);background:var(--surface);color:var(--ink2);font-size:13px;font-weight:650;cursor:pointer;display:flex;align-items:center;gap:5px;justify-content:center}
+.daytab.on{background:var(--ink);border-color:var(--ink);color:var(--bg)}
+.daytab-n{font-size:10px;font-weight:700;background:var(--accent);color:#fff;border-radius:999px;min-width:15px;height:15px;display:inline-flex;align-items:center;justify-content:center;padding:0 3px}
+.dp-list{display:flex;flex-direction:column;gap:7px}
+.dp-item{display:flex;align-items:center;gap:10px;padding:10px 13px;border:1px solid var(--line);border-radius:11px;background:var(--surface);font-size:13.5px}
+.dp-tx{flex:1;min-width:0}
+.dp-x{border:none;background:none;color:var(--ink3);font-size:18px;cursor:pointer;padding:0 4px;line-height:1;flex-shrink:0}
+.dp-x:hover{color:var(--red)}
+.dp-empty{font-size:12.5px;color:var(--ink3);padding:4px 0 2px}
+.exec-x{border:none;background:none;color:var(--ink3);font-size:17px;cursor:pointer;padding:0 2px 0 6px;line-height:1;flex-shrink:0}
+.exec-x:hover{color:var(--red)}
+</style>
 </head>
 <body>
   <div class="authwrap" id="auth">
@@ -572,6 +587,14 @@ body.previewing #pvBanner a{color:#fff;text-decoration:underline;cursor:pointer;
         </div>
 
         <div class="fcard">
+          <div class="ft">④-2 이번 주 일별 계획 <span class="opt">선택</span></div>
+          <div class="fdesc">요일별로 할 일을 미리 정해두면, 매일 '오늘' 탭에 그날 계획이 자동으로 떠요. 완료 못한 항목은 다음 날로 자동 이월돼요.</div>
+          <div class="daytabs" id="dpTabs"></div>
+          <div id="dpItems"></div>
+          <div class="exec-add" style="margin-top:10px"><input id="dpInput" placeholder="선택한 요일에 할 일 추가"><button type="button" onclick="dpAdd()">추가</button></div>
+        </div>
+
+        <div class="fcard">
           <div class="ft">⑤ 성찰 · 요약 <span class="opt">선택</span></div>
           <div class="frow"><label>내 돈 100%로 운영하는 사업이라면, 이번 주 뭘 다르게 했을까?</label><textarea id="reflection" placeholder="성찰"></textarea></div>
           <div class="frow"><label>이번 주 사업 상태를 한 문장으로</label><input type="text" id="one_line_summary" placeholder="한 줄 요약"></div>
@@ -656,7 +679,7 @@ function buildUnitSelect(){$('fUnit').innerHTML=UNITS.map(u=>'<option value="'+u
 
 async function onUnitChange(){
   const u=$('fUnit').value; if(!u) return;
-  $('lwLabel').textContent='('+LASTWEEK+')';
+  $('lwLabel').textContent='('+LASTWEEK+')';loadDayPlanDraft(u);
   // 지난주 측정값
   const {data:last}=await sb.from('measurements').select('metric_id,target_value,actual_value').eq('unit_id',u).eq('grain','week').eq('period_key',LASTWEEK);
   LASTMEAS=last||[];
@@ -1046,7 +1069,7 @@ async function renderTodayPlan(uid,dateStr){
   let h='<div class="fcard exec"><div class="exec-h"><div class="ft" style="margin:0">오늘의 계획</div><span class="exec-streak">'+(streak>0?streak+'일 연속 실천':'오늘부터 실천')+'</span></div>';
   if(pct!=null)h+='<div class="exec-prog"><div class="exec-bar"><i style="width:'+pct+'%"></i></div><span class="exec-pct">이번 주 실천율 '+pct+'% <small>('+done+'/'+tot+' 완료)</small></span></div>';
   if(list.length){
-    h+='<div class="exec-list">'+list.map(function(it){var over=it.plan_date<dateStr;return '<label class="exec-item'+(it.done?' done':'')+'"><input type="checkbox" data-id="'+esc(it.id)+'" '+(it.done?'checked':'')+' onchange="togglePlan(this)"><span class="exec-tx">'+esc(it.text)+'</span>'+(over?'<span class="exec-carry">이월</span>':'')+'</label>';}).join('')+'</div>';
+    h+='<div class="exec-list">'+list.map(function(it){var over=it.plan_date<dateStr;return '<label class="exec-item'+(it.done?' done':'')+'"><input type="checkbox" data-id="'+esc(it.id)+'" '+(it.done?'checked':'')+' onchange="togglePlan(this)"><span class="exec-tx">'+esc(it.text)+'</span>'+(over?'<span class="exec-carry">이월</span>':'')+'<button type="button" class="exec-x" data-id="'+esc(it.id)+'" onclick="delPlan(this,event)">×</button></label>';}).join('')+'</div>';
   }else{
     h+='<div class="exec-empty">오늘의 계획이 아직 없어요. 이번 주 계획에서 가져오거나 직접 추가해보세요.</div>';
   }
@@ -1058,6 +1081,29 @@ async function renderTodayPlan(uid,dateStr){
 async function togglePlan(cb){var id=cb.getAttribute('data-id');var done=cb.checked;try{await sb.from('plans').update({done:done,done_at:done?new Date().toISOString():null}).eq('id',id);}catch(e){}var c=window.__execCtx;if(c)renderTodayPlan(c.uid,c.date);}
 async function addPlan(){var c=window.__execCtx;if(!c)return;var inp=$('dyPlanInput');var t=(inp&&inp.value||'').trim();if(!t)return;try{await sb.from('plans').insert({unit_id:c.uid,user_id:SESSION.user.id,iso_week:c.iso,scope:'day',plan_date:c.date,seq:(c.seq||0)+1,text:t});}catch(e){}renderTodayPlan(c.uid,c.date);}
 async function pullWeekPlan(){var c=window.__execCtx;if(!c)return;var rev=null;try{const r=await sb.from('weekly_reviews').select('top_priority,plan_text').eq('unit_id',c.uid).eq('iso_week',c.iso).order('submitted_at',{ascending:false}).limit(1);rev=r.data&&r.data[0];}catch(e){}var items=[];if(rev){if(rev.top_priority)items.push(rev.top_priority);if(rev.plan_text)rev.plan_text.split(/\n|·|;/).map(function(s){return s.replace(/^\s*\d+[.)]\s*/,'').trim();}).filter(Boolean).forEach(function(s){items.push(s);});}items=items.slice(0,5);if(!items.length){return;}var rows=items.map(function(t,i){return {unit_id:c.uid,user_id:SESSION.user.id,iso_week:c.iso,scope:'day',plan_date:c.date,seq:(c.seq||0)+1+i,text:t};});try{await sb.from('plans').insert(rows);}catch(e){}renderTodayPlan(c.uid,c.date);}
+var DAYPLAN={},DPSEL=null;
+function dpDays(){return weekDates(fmtD(new Date()));}
+function buildDayTabs(){
+  var el=$('dpTabs');if(!el)return;
+  var days=dpDays();var dow=['월','화','수','목','금','토','일'];
+  if(!DPSEL||days.indexOf(DPSEL)<0)DPSEL=days[(new Date().getDay()+6)%7];
+  el.innerHTML=days.map(function(d,i){var n=(DAYPLAN[d]||[]).length;return '<button type="button" class="daytab'+(d===DPSEL?' on':'')+'" data-d="'+d+'" onclick="dpSel(this)">'+dow[i]+(n?'<span class="daytab-n">'+n+'</span>':'')+'</button>';}).join('');
+  renderDpItems();
+}
+function dpSel(btn){DPSEL=btn.getAttribute('data-d');buildDayTabs();}
+function renderDpItems(){
+  var el=$('dpItems');if(!el)return;
+  var items=DAYPLAN[DPSEL]||[];
+  el.innerHTML=items.length?('<div class="dp-list">'+items.map(function(t,i){return '<div class="dp-item"><span class="dp-tx">'+esc(t)+'</span><button type="button" class="dp-x" onclick="dpDel('+i+')">×</button></div>';}).join('')+'</div>'):'<div class="dp-empty">이 요일 계획이 아직 없어요.</div>';
+}
+function dpAdd(){var inp=$('dpInput');var t=(inp&&inp.value||'').trim();if(!t||!DPSEL)return;(DAYPLAN[DPSEL]=DAYPLAN[DPSEL]||[]).push(t);inp.value='';buildDayTabs();}
+function dpDel(i){if(DAYPLAN[DPSEL])DAYPLAN[DPSEL].splice(i,1);buildDayTabs();}
+async function loadDayPlanDraft(uid){
+  DAYPLAN={};var days=dpDays();
+  try{const r=await sb.from('plans').select('plan_date,text,seq').eq('unit_id',uid).eq('scope','day').gte('plan_date',days[0]).lte('plan_date',days[6]).order('seq');(r.data||[]).forEach(function(p){(DAYPLAN[p.plan_date]=DAYPLAN[p.plan_date]||[]).push(p.text);});}catch(e){}
+  buildDayTabs();
+}
+async function delPlan(btn,ev){if(ev){ev.preventDefault();ev.stopPropagation();}var id=btn.getAttribute('data-id');try{await sb.from('plans').delete().eq('id',id);}catch(e){}var c=window.__execCtx;if(c)renderTodayPlan(c.uid,c.date);}
 function fmsg(t,k){const e=$('fmsg');e.className='fmsg'+(k?(' '+k):'');e.textContent=t||'';}
 
 $('submitBtn').onclick=async()=>{
@@ -1092,6 +1138,15 @@ $('submitBtn').onclick=async()=>{
     try{
       await sb.from('tasks').delete().eq('unit_id',unit_id).eq('period_key',THISWEEK);
       if(tasksNew.length){const trows=tasksNew.map(t=>({unit_id,title:t.title,assignee_user_id:t.assignee_user_id,assignee_name:(USERS.find(u=>u.id===t.assignee_user_id)||{}).name||null,due_date:t.due_date,period_key:THISWEEK,status:'open',source_review_id:rev.id,created_by:SESSION.user.id}));await sb.from('tasks').insert(trows);}
+    }catch(_){}
+    // 일별 계획 저장 (이번주 재저장, 완료상태 보존)
+    try{
+      const _days=weekDates(fmtD(new Date()));
+      let _ex=[];try{const _r=await sb.from('plans').select('plan_date,text,done').eq('unit_id',unit_id).eq('scope','day').gte('plan_date',_days[0]).lte('plan_date',_days[6]);_ex=_r.data||[];}catch(_){}
+      const _dm={};_ex.forEach(function(p){_dm[p.plan_date+'|'+p.text]=p.done;});
+      await sb.from('plans').delete().eq('unit_id',unit_id).eq('scope','day').gte('plan_date',_days[0]).lte('plan_date',_days[6]);
+      const _pr=[];_days.forEach(function(d){(DAYPLAN[d]||[]).forEach(function(t,i){_pr.push({unit_id,user_id:SESSION.user.id,iso_week:THISWEEK,scope:'day',plan_date:d,seq:i+1,text:t,done:!!_dm[d+'|'+t]});});});
+      if(_pr.length)await sb.from('plans').insert(_pr);
     }catch(_){}
     // 코칭 캐시 무효화(해당 매장 + 내 종합 코칭)
     try{await sb.from('coachings').delete().eq('unit_id',unit_id);}catch(_){}
