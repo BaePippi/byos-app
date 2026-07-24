@@ -431,6 +431,30 @@ body.previewing #pvBanner a{color:#fff;text-decoration:underline;cursor:pointer;
 .lbtable tr:last-child td{border-bottom:0}
 .lbtable th:last-child,.lbtable td:last-child{text-align:right;width:120px}
 </style>
+<style id="u12">
+.fcard.exec{margin-top:14px}
+.exec-h{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:13px}
+.exec-streak{font-size:11.5px;font-weight:650;color:var(--accent);background:var(--accent-weak);padding:4px 11px;border-radius:999px;white-space:nowrap}
+.exec-prog{margin-bottom:15px}
+.exec-bar{height:8px;border-radius:999px;background:var(--fill);overflow:hidden;margin-bottom:7px}
+.exec-bar i{display:block;height:100%;background:var(--grad);border-radius:999px;transition:width .7s cubic-bezier(.32,.72,0,1)}
+.exec-pct{font-size:12.5px;color:var(--ink2);font-weight:600}
+.exec-pct small{color:var(--ink3);font-weight:500}
+.exec-list{display:flex;flex-direction:column;gap:8px;margin-bottom:13px}
+.exec-item{display:flex;align-items:center;gap:11px;padding:12px 14px;border:1px solid var(--line);border-radius:13px;background:var(--surface);cursor:pointer;font-size:14px;transition:background .2s,border-color .2s}
+.exec-item:hover{border-color:var(--accent)}
+.exec-item input{width:19px;height:19px;accent-color:var(--accent);flex-shrink:0;cursor:pointer}
+.exec-item.done{background:var(--fill)}
+.exec-item.done .exec-tx{text-decoration:line-through;color:var(--ink3)}
+.exec-tx{flex:1;min-width:0}
+.exec-carry{font-size:10.5px;font-weight:700;color:var(--amber);background:var(--amber-bg);padding:3px 8px;border-radius:999px;flex-shrink:0}
+.exec-empty{font-size:13px;color:var(--ink3);padding:8px 0 14px;line-height:1.5}
+.exec-add{display:flex;gap:8px;margin-bottom:11px}
+.exec-add input{flex:1;min-width:0;padding:11px 13px;border:1px solid var(--line);border-radius:11px;font-size:14px;background:var(--surface);color:var(--ink)}
+.exec-add button{padding:0 17px;border:none;border-radius:11px;background:var(--ink);color:var(--bg);font-weight:650;font-size:13px;cursor:pointer;flex-shrink:0}
+.exec-pull{font-size:12.5px;color:var(--accent);font-weight:600;cursor:pointer;text-align:center;padding:6px}
+.exec-pull:hover{text-decoration:underline}
+</style>
 </head>
 <body>
   <div class="authwrap" id="auth">
@@ -462,7 +486,7 @@ body.previewing #pvBanner a{color:#fff;text-decoration:underline;cursor:pointer;
         <div class="hero"><div class="eyebrow">매일 · 빠른 입력</div><h1>오늘</h1><p class="sub">현장에서 매출·객수·이슈만 몇 초에. 이번 주 목표에 자동으로 쌓여요.</p></div>
         <div class="dailywrap">
           <div id="dyGreet"></div>
-          <div id="dyTip"></div>
+          <div id="dyTip"></div><div id="dyExec"></div>
           <div class="fcard daily-card">
             <div class="dyhead">
               <div class="frow" style="margin-bottom:0;flex:1"><label>매장</label><select id="dyUnit" onchange="onDailyUnit()"></select></div>
@@ -711,7 +735,7 @@ async function loadDaily(){
   if(dm&&dm.length)dymsg('이 날짜에 이미 입력한 값을 불러왔어요. 수정 후 다시 저장하면 돼요.','ok');
   await renderDayGreet(u);
   const sum=await renderDayWeek(u,d);
-  await renderDayPlan(u,d,sum);
+  await renderDayPlan(u,d,sum);await renderTodayPlan(u,d);
 }
 $('dySave').onclick=async()=>{
   const u=$('dyUnit').value,d=$('dyDate').value;if(!u||!d){dymsg('매장과 날짜를 선택해주세요.','err');return;}
@@ -729,7 +753,7 @@ $('dySave').onclick=async()=>{
     const {error:ne}=await sb.from('daily_notes').upsert(note,{onConflict:'unit_id,log_date'});if(ne)throw ne;
     await renderDayGreet(u);
     const sum=await renderDayWeek(u,d);
-    await renderDayPlan(u,d,sum);
+    await renderDayPlan(u,d,sum);await renderTodayPlan(u,d);
     let cel='저장됐어요! 이번 주 목표에 반영됐어요.';
     if(sum&&sum.target&&sum.sumS>=sum.target)cel='주간 목표 달성! 이번 주 목표를 넘겼어요.';
     else if(sum&&sum.todayS&&sum.yS&&sum.todayS>sum.yS)cel='어제보다 좋아요! (매출 '+(Math.round((sum.todayS-sum.yS)/sum.yS*100))+'% ↑)';
@@ -1005,6 +1029,35 @@ async function renderMorningBrief(){
   el.innerHTML=h+'</div>';
 }
 
+async function renderTodayPlan(uid,dateStr){
+  const el=$('dyExec');if(!el||!uid||!dateStr)return;
+  const iso=isoWeek(new Date(dateStr+'T00:00:00'));
+  const wk=weekDates(dateStr);const wkStart=wk[0],wkEnd=wk[6];
+  let rows=[];
+  try{const r=await sb.from('plans').select('*').eq('unit_id',uid).eq('scope','day').gte('plan_date',wkStart).lte('plan_date',wkEnd).order('plan_date').order('seq');rows=r.data||[];}catch(e){el.innerHTML='';return;}
+  const todays=rows.filter(function(r){return r.plan_date===dateStr;});
+  const carry=rows.filter(function(r){return r.plan_date<dateStr&&!r.done;});
+  const list=carry.concat(todays);
+  const tot=rows.length,done=rows.filter(function(r){return r.done;}).length;
+  const pct=tot?Math.round(done/tot*100):null;
+  const byDay={};rows.forEach(function(r){(byDay[r.plan_date]=byDay[r.plan_date]||[]).push(r);});
+  let streak=0,cur=dateStr;
+  for(let i=0;i<60;i++){const items=byDay[cur];if(items&&items.length&&items.every(function(x){return x.done;})){streak++;cur=addDaysStr(cur,-1);}else if(cur===dateStr){cur=addDaysStr(cur,-1);}else break;}
+  let h='<div class="fcard exec"><div class="exec-h"><div class="ft" style="margin:0">오늘의 계획</div><span class="exec-streak">'+(streak>0?streak+'일 연속 실천':'오늘부터 실천')+'</span></div>';
+  if(pct!=null)h+='<div class="exec-prog"><div class="exec-bar"><i style="width:'+pct+'%"></i></div><span class="exec-pct">이번 주 실천율 '+pct+'% <small>('+done+'/'+tot+' 완료)</small></span></div>';
+  if(list.length){
+    h+='<div class="exec-list">'+list.map(function(it){var over=it.plan_date<dateStr;return '<label class="exec-item'+(it.done?' done':'')+'"><input type="checkbox" data-id="'+esc(it.id)+'" '+(it.done?'checked':'')+' onchange="togglePlan(this)"><span class="exec-tx">'+esc(it.text)+'</span>'+(over?'<span class="exec-carry">이월</span>':'')+'</label>';}).join('')+'</div>';
+  }else{
+    h+='<div class="exec-empty">오늘의 계획이 아직 없어요. 이번 주 계획에서 가져오거나 직접 추가해보세요.</div>';
+  }
+  h+='<div class="exec-add"><input id="dyPlanInput" placeholder="오늘 할 일 추가"><button onclick="addPlan()">추가</button></div>';
+  h+='<div class="exec-pull" onclick="pullWeekPlan()">이번 주 최우선·계획에서 오늘 할 일 가져오기</div>';
+  el.innerHTML=h;
+  window.__execCtx={uid:uid,date:dateStr,iso:iso,seq:(todays.length?Math.max.apply(null,todays.map(function(x){return x.seq||0;})):0)};
+}
+async function togglePlan(cb){var id=cb.getAttribute('data-id');var done=cb.checked;try{await sb.from('plans').update({done:done,done_at:done?new Date().toISOString():null}).eq('id',id);}catch(e){}var c=window.__execCtx;if(c)renderTodayPlan(c.uid,c.date);}
+async function addPlan(){var c=window.__execCtx;if(!c)return;var inp=$('dyPlanInput');var t=(inp&&inp.value||'').trim();if(!t)return;try{await sb.from('plans').insert({unit_id:c.uid,user_id:SESSION.user.id,iso_week:c.iso,scope:'day',plan_date:c.date,seq:(c.seq||0)+1,text:t});}catch(e){}renderTodayPlan(c.uid,c.date);}
+async function pullWeekPlan(){var c=window.__execCtx;if(!c)return;var rev=null;try{const r=await sb.from('weekly_reviews').select('top_priority,plan_text').eq('unit_id',c.uid).eq('iso_week',c.iso).order('submitted_at',{ascending:false}).limit(1);rev=r.data&&r.data[0];}catch(e){}var items=[];if(rev){if(rev.top_priority)items.push(rev.top_priority);if(rev.plan_text)rev.plan_text.split(/\n|·|;/).map(function(s){return s.replace(/^\s*\d+[.)]\s*/,'').trim();}).filter(Boolean).forEach(function(s){items.push(s);});}items=items.slice(0,5);if(!items.length){return;}var rows=items.map(function(t,i){return {unit_id:c.uid,user_id:SESSION.user.id,iso_week:c.iso,scope:'day',plan_date:c.date,seq:(c.seq||0)+1+i,text:t};});try{await sb.from('plans').insert(rows);}catch(e){}renderTodayPlan(c.uid,c.date);}
 function fmsg(t,k){const e=$('fmsg');e.className='fmsg'+(k?(' '+k):'');e.textContent=t||'';}
 
 $('submitBtn').onclick=async()=>{
