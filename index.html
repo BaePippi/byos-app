@@ -1085,7 +1085,7 @@ async function renderDash(){
   
   const coachItems=[];window.__portfolioCtx=null;
   if(DSCOPE==='unit'&&tgt==='ALL'){h+=dashCompare(meas);window.__portfolioCtx={personId:'__ALLU__',units:unitIds.slice(),wk:latestWk,label:'전체 매장'};h+='<div class="sh" style="margin-top:26px">전체 매장 종합 코칭</div><div class="coachwrap" id="coach-portfolio"><div class="coach-load">전체 매장 종합 코칭 생성 중… (여러 매장을 한 번에 읽어요, 몇 초)</div></div>';h+=leaderboard(meas);}
-  else if(DSCOPE==='person'&&tgt==='ALLP'){h+=dashComparePeople(meas);window.__portfolioCtx={personId:'__ALLP__',units:unitIds.slice(),wk:latestWk,label:'전체 담당자'};h+='<div class="sh" style="margin-top:26px">전체 담당자 종합 코칭</div><div class="coachwrap" id="coach-portfolio"><div class="coach-load">전체 담당자 종합 코칭 생성 중… (몇 초)</div></div>';}
+  else if(DSCOPE==='person'&&tgt==='ALLP'){h+=dashComparePeople(meas);window.__portfolioCtx={personId:'__ALLP__',units:unitIds.slice(),wk:latestWk,label:'전체 담당자',people:(USERS||[]).map(function(u){return {name:(u.name||u.email),unit_ids:(ASSIGNS||[]).filter(function(a){return a.user_id===u.id;}).map(function(a){return a.unit_id;})};}).filter(function(x){return x.unit_ids.length;})};h+='<div class="sh" style="margin-top:26px">전체 담당자 종합 코칭</div><div class="coachwrap" id="coach-portfolio"><div class="coach-load">전체 담당자 종합 코칭 생성 중… (몇 초)</div></div>';}
   else{const byU={};meas.forEach(m=>{(byU[m.unit_id]=byU[m.unit_id]||[]).push(m);});const keys=Object.keys(byU).sort();const multi=keys.length>1;
     if(keys.length===0)h+=empty('측정값은 아직 없지만 주간 리뷰는 쌓이고 있어요. 아래 코칭을 참고하세요.');
     if(DSCOPE==='person'&&personId&&keys.length>=2){window.__portfolioCtx={personId,units:keys.slice(),wk:latestWk};h+='<div class="coachwrap" id="coach-portfolio"><div class="coach-load">담당 매장 종합 코칭 불러오는 중… (여러 매장을 한 번에 읽어요)</div></div>';}
@@ -1220,15 +1220,29 @@ async function setTaskStatus(id,val,ev){
 async function loadPortfolio(p){
   const el=$('coach-portfolio');if(!el)return;
   const cacheId='@person:'+p.personId;
-  try{const{data}=await sb.from('coachings').select('payload').eq('unit_id',cacheId).eq('iso_week',p.wk).maybeSingle();if(data&&data.payload){el.innerHTML=portfolioHtml(data.payload,p);return;}}catch(_){}
+  try{const{data}=await sb.from('coachings').select('payload').eq('unit_id',cacheId).eq('iso_week',p.wk).maybeSingle();if(data&&data.payload){el.innerHTML=(data.payload.per_person?peopleHtml:portfolioHtml)(data.payload,p);return;}}catch(_){}
   el.innerHTML='<div class="coach-load">담당 매장 종합 코칭 생성 중… (매장 여러 곳을 한 번에 읽어요, 몇 초)</div>';
   try{
     const pname=p.label||((USERS.find(u=>u.id===p.personId)||{}).name||'');
-    const _kind=(p.personId==='__ALLU__'||p.personId==='__ALLP__')?'org':'person';const{data,error}=await sb.functions.invoke('coach',{body:{scope:'portfolio',unit_ids:p.units,iso_week:p.wk,person_name:pname,kind:_kind}});
+    var _body;if(p.people&&p.people.length){_body={scope:'portfolio',people:p.people,iso_week:p.wk};}else{var _kind=(p.personId==='__ALLU__'||p.personId==='__ALLP__')?'org':'person';_body={scope:'portfolio',unit_ids:p.units,iso_week:p.wk,person_name:pname,kind:_kind};}const{data,error}=await sb.functions.invoke('coach',{body:_body});
     if(error)throw error;
-    if(data&&data.coaching){const payload={...data.coaching,_engine:data.engine};el.innerHTML=portfolioHtml(payload,p);try{await sb.from('coachings').upsert({unit_id:cacheId,iso_week:p.wk,payload,engine:data.engine,updated_at:new Date().toISOString()},{onConflict:'unit_id,iso_week'});}catch(_){}}
+    if(data&&data.coaching){const payload={...data.coaching,_engine:data.engine};el.innerHTML=(payload.per_person?peopleHtml:portfolioHtml)(payload,p);try{await sb.from('coachings').upsert({unit_id:cacheId,iso_week:p.wk,payload,engine:data.engine,updated_at:new Date().toISOString()},{onConflict:'unit_id,iso_week'});}catch(_){}}
     else el.innerHTML='<div class="coach-err">종합 코칭 실패'+(data&&data.error?': '+esc(data.error):'')+'</div>';
   }catch(e){el.innerHTML='<div class="coach-err">종합 코칭 호출 실패: '+esc(e.message||e)+'</div>';}
+}
+function peopleHtml(c,p){
+  if(!c)return '';
+  var atr=(c.at_risk||[]).filter(Boolean);var grw=(c.growing||[]).filter(Boolean);var per=(c.per_person||[]).filter(function(x){return x&&x.focus;});
+  var h='<div class="coachcard portfolio"><div class="coach-h"><span class="coach-badge" style="background:var(--blue)">전체 담당자 코칭</span><span class="coach-wk">'+wkLabel(p.wk)+' · 담당자 '+((p.people&&p.people.length)||'')+'명</span><button class="coach-refresh" onclick="refreshPortfolio()">⟳ 다시</button></div>';
+  if(c.lead_diagnosis)h+='<div class="coach-diag">'+esc(c.lead_diagnosis)+'</div>';
+  if(c.priority_person)h+='<div class="coach-row"><div class="coach-lbl">우선 코칭할 담당자</div><div class="coach-val"><b>'+esc(c.priority_person)+'</b>'+(c.priority_reason?' — '+esc(c.priority_reason):'')+'</div></div>';
+  if(atr.length)h+='<div class="coach-row"><div class="coach-lbl">위험 담당자</div><div class="coach-val">'+atr.map(function(x){return '· '+esc(x);}).join('<br>')+'</div></div>';
+  if(grw.length)h+='<div class="coach-row"><div class="coach-lbl">급성장 담당자</div><div class="coach-val">'+grw.map(function(x){return '· '+esc(x);}).join('<br>')+'</div></div>';
+  if(c.directive)h+='<div class="coach-row"><div class="coach-lbl">이번 주 지시</div><div class="coach-val"><b>'+esc(c.directive)+'</b></div></div>';
+  if(per.length)h+='<div class="coach-row"><div class="coach-lbl">담당자별 초점</div><div class="coach-val">'+per.map(function(x){return '· <b>'+esc(x.person)+'</b> — '+esc(x.focus);}).join('<br>')+'</div></div>';
+  if(c.watch_question)h+='<div class="coach-watch">다음 주 점검 — '+esc(c.watch_question)+'</div>';
+  if(c.confidence)h+='<div class="coach-conf">신뢰도 — '+esc(c.confidence)+'</div>';
+  return h+'</div>';
 }
 function portfolioHtml(c,p){
   if(!c)return '';
