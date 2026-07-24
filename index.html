@@ -424,6 +424,13 @@ body.previewing #pvBanner a{color:#fff;text-decoration:underline;cursor:pointer;
 .cmpval{width:76px;flex-shrink:0;text-align:right;font-size:12.5px;font-weight:700;color:var(--ink)}
 @media(max-width:520px){.cmplab{width:66px}.cmpval{width:62px}}
 </style>
+<style id="u11">
+.lbtable{width:100%;border-collapse:collapse;background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow:hidden;margin-top:8px}
+.lbtable th{text-align:left;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;color:var(--ink3);padding:11px 15px;background:var(--surface2);border-bottom:1px solid var(--line)}
+.lbtable td{padding:12px 15px;border-bottom:1px solid var(--line);font-size:13.5px}
+.lbtable tr:last-child td{border-bottom:0}
+.lbtable th:last-child,.lbtable td:last-child{text-align:right;width:120px}
+</style>
 </head>
 <body>
   <div class="authwrap" id="auth">
@@ -566,6 +573,9 @@ const sb=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
 let mode='login',UNITS=[],METRICS=[],SESSION=null,LASTMEAS=[],USERS=[],ASSIGNS=[],DSCOPE='unit',ROLE='partner',CURVIEW='home';
 const $=id=>document.getElementById(id);
 const esc=s=>(s==null?'':String(s)).replace(/&/g,'&amp;').replace(/</g,'&lt;');
+function isoToMonday(pk){var mm=/(\d+)-W(\d+)/.exec(pk||'');if(!mm)return null;var y=+mm[1],w=+mm[2];var s=new Date(Date.UTC(y,0,1+(w-1)*7));var dow=s.getUTCDay();var mon=new Date(s);mon.setUTCDate(s.getUTCDate()+((dow<=4?1:8)-dow));return mon;}
+function lastClosedWeek(){var d=new Date();var day=(d.getDay()+6)%7;var sun=new Date(d);sun.setDate(d.getDate()+(6-day));sun.setHours(23,59,59,999);var ref=(d>sun)?d:new Date(d.getTime()-7*86400000);return isoWeek(ref);}
+function wkLabel(pk){if(!pk)return '';var mon=isoToMonday(pk);if(!mon)return pk;var th=new Date(mon);th.setUTCDate(mon.getUTCDate()+3);return (th.getUTCMonth()+1)+'월 '+Math.ceil(th.getUTCDate()/7)+'주차';}
 function isoWeek(d){d=new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate()));const day=d.getUTCDay()||7;d.setUTCDate(d.getUTCDate()+4-day);const ys=new Date(Date.UTC(d.getUTCFullYear(),0,1));const wk=Math.ceil((((d-ys)/86400000)+1)/7);return d.getUTCFullYear()+'-W'+String(wk).padStart(2,'0');}
 const THISWEEK=isoWeek(new Date());
 const LASTWEEK=isoWeek(new Date(Date.now()-7*86400000));
@@ -582,7 +592,7 @@ function tr(m){if(/Invalid login/i.test(m))return '이메일 또는 비밀번호
 function setView(v){CURVIEW=v;['daily','home','dash','input'].forEach(x=>{var el=$('view-'+x);if(el)el.classList.toggle('on',v===x);});[].slice.call(document.querySelectorAll('#tabbar .tab')).forEach(function(b){b.classList.toggle('on',b.getAttribute('data-view')===v);});window.scrollTo({top:0,behavior:'smooth'});if(v==='dash')renderDash();if(v==='daily')renderDaily();if(v==='home')renderHome();}
 
 sb.auth.onAuthStateChange((_e,s)=>render(s));
-async function render(session){SESSION=session;if(session){if(window.__rf===session.user.id)return;window.__rf=session.user.id;$('auth').style.display='none';$('app').style.display='block';$('uemail').textContent=session.user.email;$('authBtn').disabled=false;$('weekLabel').textContent=THISWEEK+' 입력';await loadData();ROLE=(USERS.find(u=>u.id===session.user.id)||{}).role||'partner';buildTabs(effRole());var _pb=document.getElementById('previewBtn');if(_pb)_pb.style.display=realAdmin()?'':'none';setTopdate();applyThemeIcon();renderHome();buildUnitSelect();buildDailyUnitSelect();buildDashTarget();buildDashTabs();await onUnitChange();if(!window.__booted){window.__booted=true;setView('home');}}else{window.__booted=false;window.__rf=null;$('app').style.display='none';$('auth').style.display='flex';}}
+async function render(session){SESSION=session;if(session){if(window.__rf===session.user.id)return;window.__rf=session.user.id;$('auth').style.display='none';$('app').style.display='block';$('uemail').textContent=session.user.email;$('authBtn').disabled=false;$('weekLabel').textContent=wkLabel(THISWEEK)+' 입력';await loadData();ROLE=(USERS.find(u=>u.id===session.user.id)||{}).role||'partner';buildTabs(effRole());var _pb=document.getElementById('previewBtn');if(_pb)_pb.style.display=realAdmin()?'':'none';setTopdate();applyThemeIcon();renderHome();buildUnitSelect();buildDailyUnitSelect();buildDashTarget();buildDashTabs();await onUnitChange();if(!window.__booted){window.__booted=true;setView('home');}}else{window.__booted=false;window.__rf=null;$('app').style.display='none';$('auth').style.display='flex';}}
 
 async function loadData(){const[{data:u},{data:m},{data:us},{data:asn}]=await Promise.all([sb.from('units').select('*').eq('active',true).order('id'),sb.from('metrics').select('id,name,uom,category').eq('active',true).order('category'),sb.from('users').select('id,name,email,role').eq('active',true),sb.from('assignments').select('user_id,unit_id')]);UNITS=u||[];METRICS=m||[];USERS=us||[];ASSIGNS=asn||[];}
 const uName=id=>{const u=(UNITS.find(x=>x.id===id));return u?(u.name||id):id;};
@@ -592,7 +602,7 @@ async function renderOverview(){const el=$('content');if(!el)return;el.innerHTML
   const unitIds=UNITS.map(u=>u.id);
   const {data:measAll}=await sb.from('measurements').select('unit_id,metric_id,period_key,target_value,actual_value').eq('grain','week').in('unit_id',unitIds);
   const meas=measAll||[];
-  const {data:rvAll}=await sb.from('weekly_reviews').select('unit_id').eq('iso_week',THISWEEK);
+  const _refwk=lastClosedWeek();const {data:rvAll}=await sb.from('weekly_reviews').select('unit_id').eq('iso_week',_refwk);
   const submitted=new Set((rvAll||[]).map(r=>r.unit_id));
   if(!meas.length){el.innerHTML='<div class="empty">아직 주간 데이터가 없어요. 매장에서 주간 입력이 쌓이면 여기 현황·순위·주의 매장이 나타나요.</div>';return;}
   const weeks=[...new Set(meas.map(m=>m.period_key))].sort();const latestWk=weeks[weeks.length-1],prevWk=weeks[weeks.length-2];
@@ -606,8 +616,8 @@ async function renderOverview(){const el=$('content');if(!el)return;el.innerHTML
   let h='<div class="tiles">';
   h+='<div class="tile"><div class="k">이번주 평균 달성률</div><div class="v">'+(avgNow==null?'—':avgNow)+(avgNow==null?'':'<small> %</small>')+'</div>'+(delta!=null?'<div class="tdelta '+(delta>=0?'up':'down')+'">'+(delta>=0?'▲ ':'▼ ')+Math.abs(delta)+'%p</div>':'')+'</div>';
   h+='<div class="tile"><div class="k">이번주 매출</div><div class="v" style="font-size:19px">'+wonShort(sA)+'<small> / '+wonShort(sT)+'</small></div></div>';
-  h+='<div class="tile"><div class="k">주간 리뷰 제출</div><div class="v">'+submitted.size+'<small> / '+UNITS.length+'</small></div></div>';
-  h+='</div><div style="margin-top:8px;color:var(--ink3);font-size:12px">기준 주차: '+esc(latestWk)+'</div>';
+  h+='<div class="tile"><div class="k">주간 리뷰 제출 <span style="font-weight:500;color:var(--ink3)">·'+wkLabel(_refwk)+'</span></div><div class="v">'+submitted.size+'<small> / '+UNITS.length+'</small></div></div>';
+  h+='</div><div style="margin-top:8px;color:var(--ink3);font-size:12px">기준 주차: '+wkLabel(latestWk)+'</div>';
   const attn=[];withLatest.forEach(uid=>{const a=uAvg(uid,latestWk);if(a!=null&&a<90)attn.push({uid,r:'달성률 '+a+'%',bad:true});});
   UNITS.forEach(u=>{if(!submitted.has(u.id))attn.push({uid:u.id,r:'주간 리뷰 미제출',bad:false});});
   const seen={};const au=attn.filter(x=>seen[x.uid]?false:(seen[x.uid]=true));
@@ -865,7 +875,7 @@ async function renderUserHome(){
   const brief=$('brief');if(brief)brief.innerHTML='';
   const hr=new Date().getHours();const part=hr<11?'좋은 아침이에요':hr<17?'좋은 오후예요':'오늘도 고생 많으셨어요';
   const eb=$('homeEyebrow'),ht=$('homeTitle'),hs=$('homeSub');
-  if(eb)eb.textContent=THISWEEK+' · 나의 운영 홈';
+  if(eb)eb.textContent=wkLabel(THISWEEK)+' · 나의 운영 홈';
   if(ht)ht.textContent=myName()+'님, '+part+'.';
   if(hs)hs.textContent='오늘 할 일과 나를 위한 코칭, 내 매장 흐름을 한눈에.';
   el.innerHTML='<div class="empty">홈 불러오는 중…</div>';
@@ -983,7 +993,7 @@ async function renderMorningBrief(){
   const today=fmtD(new Date()),y=addDaysStr(today,-1);
   let ydm=[],rv=[],co=[];
   try{const r=await sb.from('measurements').select('unit_id,actual_value').eq('grain','day').eq('metric_id','sales').eq('period_key',y).in('unit_id',myUnits);ydm=r.data||[];}catch(_){}
-  try{const r=await sb.from('weekly_reviews').select('unit_id').eq('iso_week',THISWEEK).in('unit_id',myUnits);rv=r.data||[];}catch(_){}
+  try{const r=await sb.from('weekly_reviews').select('unit_id').eq('iso_week',lastClosedWeek()).in('unit_id',myUnits);rv=r.data||[];}catch(_){}
   try{const r=await sb.from('coachings').select('payload').in('unit_id',myUnits).order('updated_at',{ascending:false}).limit(1);co=r.data||[];}catch(_){}
   const closed=new Set(ydm.map(r=>r.unit_id)),ySum=ydm.reduce((a,r)=>a+Number(r.actual_value||0),0);
   const submitted=new Set(rv.map(r=>r.unit_id));const missing=myUnits.length-submitted.size;
@@ -1133,7 +1143,7 @@ function coachHtml(c,uid,wk,engine){
   const acts=(c.actions||[]).filter(a=>a&&String(a).trim());
   const ev=(c.evidence||[]).filter(a=>a&&String(a).trim());
   const isClaude=!engine||/claude/i.test(engine);
-  let h='<div class="coachcard"><div class="coach-h"><span class="coach-badge">AI 코칭</span><span class="coach-wk">'+esc(wk||'')+'</span>';
+  let h='<div class="coachcard"><div class="coach-h"><span class="coach-badge">AI 코칭</span><span class="coach-wk">'+wkLabel(wk||'')+'</span>';
   if(!isClaude)h+='<span class="coach-eng">'+esc(String(engine).replace(/^fallback.*/,'룰 기반'))+'</span>';
   h+='<button class="coach-refresh" onclick="refreshCoach(\''+esc(uid)+'\',\''+esc(wk)+'\')">⟳ 다시</button></div>';
   if(c.diagnosis)h+='<div class="coach-diag">'+esc(c.diagnosis)+'</div>';
@@ -1223,7 +1233,7 @@ async function loadPortfolio(p){
 function portfolioHtml(c,p){
   if(!c)return '';
   const pats=(c.cross_patterns||[]).filter(Boolean);const per=(c.per_store||[]).filter(x=>x&&x.focus);
-  let h='<div class="coachcard portfolio"><div class="coach-h"><span class="coach-badge" style="background:var(--blue)">'+(p.label?'전체 코칭':'담당자 코칭')+'</span><span class="coach-wk">'+esc(p.wk)+' · '+(p.label||('담당 '+p.units.length+'개 매장'))+'</span><button class="coach-refresh" onclick="refreshPortfolio()">⟳ 다시</button></div>';
+  let h='<div class="coachcard portfolio"><div class="coach-h"><span class="coach-badge" style="background:var(--blue)">'+(p.label?'전체 코칭':'담당자 코칭')+'</span><span class="coach-wk">'+wkLabel(p.wk)+' · '+(p.label||('담당 '+p.units.length+'개 매장'))+'</span><button class="coach-refresh" onclick="refreshPortfolio()">⟳ 다시</button></div>';
   if(c.lead_diagnosis)h+='<div class="coach-diag">'+esc(c.lead_diagnosis)+'</div>';
   if(c.priority_unit)h+='<div class="coach-row"><div class="coach-lbl">우선 챙길 곳</div><div class="coach-val"><b>'+esc(c.priority_unit)+'</b>'+(c.priority_reason?' — '+esc(c.priority_reason):'')+'</div></div>';
   if(pats.length)h+='<div class="coach-actwrap"><div class="coach-lbl">매장을 가로지르는 패턴</div><ul class="coach-acts" style="list-style:disc">'+pats.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul></div>';
@@ -1294,7 +1304,7 @@ function achTable(rows){const weeks=[...new Set(rows.map(r=>r.period_key))].sort
 
 function leaderboard(meas){const byU={};meas.forEach(m=>{(byU[m.unit_id]=byU[m.unit_id]||[]).push(m);});
   const rows=Object.keys(byU).map(uid=>{const rs=byU[uid];const wks=[...new Set(rs.map(r=>r.period_key))].sort();const lw=wks[wks.length-1];const lp=rs.filter(r=>r.period_key===lw).map(r=>achPct(r.target_value,r.actual_value)).filter(v=>v!=null);const avg=avgClamped(lp);return {uid,lw,avg,n:new Set(rs.map(r=>r.metric_id)).size,weeks:wks.length};}).sort((a,b)=>(b.avg==null?-1:b.avg)-(a.avg==null?-1:a.avg));
-  let h='<div class="sh" style="margin-top:24px">매장·사업부 달성 현황</div><table class="atable"><thead><tr><th>매장·사업부</th><th>평균 달성률</th></tr></thead><tbody>';
+  let h='<div class="sh" style="margin-top:24px">매장·사업부 달성 현황</div><table class="lbtable"><thead><tr><th>매장·사업부</th><th>평균 달성률</th></tr></thead><tbody>';
   rows.forEach(r=>{const cls=r.avg==null?'':('cell-'+(r.avg>=100?'ok':r.avg>=90?'warn':'bad'));h+='<tr><td style="font-weight:600">'+esc(uName(r.uid))+'</td><td class="'+cls+'">'+(r.avg==null?'—':achTxt(r.avg))+'</td></tr>';});
   return h+'</tbody></table>';}
 
