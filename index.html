@@ -486,6 +486,18 @@ body.previewing #pvBanner a{color:#fff;text-decoration:underline;cursor:pointer;
 .dcoach-watch{font-size:12.5px;color:var(--amber);font-weight:600;margin-bottom:10px}
 .dcoach-enc{font-size:13px;color:var(--accent);font-weight:650;border-top:1px solid var(--line);margin-top:4px;padding-top:12px}
 </style>
+<style id="u16">
+.wnav{position:sticky;bottom:0;background:var(--bg);padding:14px 0 18px;margin-top:6px;z-index:5}
+.wprog{margin-bottom:12px}
+.wprog-bar{height:6px;border-radius:999px;background:var(--fill);overflow:hidden;margin-bottom:8px}
+.wprog-bar i{display:block;height:100%;background:var(--grad);border-radius:999px;transition:width .4s cubic-bezier(.32,.72,0,1)}
+.wprog span{font-size:12.5px;color:var(--ink2);font-weight:650}
+.wbtns{display:flex;gap:10px}
+.wbtn{flex:1;height:50px;border-radius:14px;font-size:15px;font-weight:700;cursor:pointer;transition:transform .15s}
+.wbtn:active{transform:scale(.98)}
+.wprev{background:var(--surface);color:var(--ink2);border:1px solid var(--line)}
+.wnext{background:var(--grad);color:#fff;border:none}
+</style>
 </head>
 <body>
   <div class="authwrap" id="auth">
@@ -650,7 +662,7 @@ $('authBtn').onclick=async()=>{const email=$('email').value.trim(),password=$('p
 $('logoutBtn').onclick=async()=>{await sb.auth.signOut();};
 function tr(m){if(/Invalid login/i.test(m))return '이메일 또는 비밀번호가 맞지 않아요.';if(/already registered/i.test(m))return '이미 가입된 이메일이에요. 로그인해주세요.';return m;}
 
-function setView(v){CURVIEW=v;['daily','home','dash','input'].forEach(x=>{var el=$('view-'+x);if(el)el.classList.toggle('on',v===x);});[].slice.call(document.querySelectorAll('#tabbar .tab')).forEach(function(b){b.classList.toggle('on',b.getAttribute('data-view')===v);});window.scrollTo({top:0,behavior:'smooth'});if(v==='dash')renderDash();if(v==='daily')renderDaily();if(v==='home')renderHome();}
+function setView(v){CURVIEW=v;['daily','home','dash','input'].forEach(x=>{var el=$('view-'+x);if(el)el.classList.toggle('on',v===x);});[].slice.call(document.querySelectorAll('#tabbar .tab')).forEach(function(b){b.classList.toggle('on',b.getAttribute('data-view')===v);});window.scrollTo({top:0,behavior:'smooth'});if(v==='dash')renderDash();if(v==='daily')renderDaily();if(v==='home')renderHome();if(v==='input')setupWizard();}
 
 sb.auth.onAuthStateChange((_e,s)=>render(s));
 async function render(session){SESSION=session;if(session){if(window.__rf===session.user.id)return;window.__rf=session.user.id;$('auth').style.display='none';$('app').style.display='block';$('uemail').textContent=session.user.email;$('authBtn').disabled=false;$('weekLabel').textContent=wkLabel(THISWEEK)+' 입력';await loadData();ROLE=(USERS.find(u=>u.id===session.user.id)||{}).role||'partner';buildTabs(effRole());var _pb=document.getElementById('previewBtn');if(_pb)_pb.style.display=realAdmin()?'':'none';setTopdate();applyThemeIcon();renderHome();buildUnitSelect();buildDailyUnitSelect();buildDashTarget();buildDashTabs();await onUnitChange();if(!window.__booted){window.__booted=true;setView('home');}}else{window.__booted=false;window.__rf=null;$('app').style.display='none';$('auth').style.display='flex';}}
@@ -820,31 +832,16 @@ async function renderDayGreet(u){
 function daysUntil(fromStr,dueStr){return Math.round((new Date(dueStr+'T00:00:00')-new Date(fromStr+'T00:00:00'))/86400000);}
 async function renderDayPlan(u,dateStr,sum){
   const el=$('dyTip');if(!el)return;
-  // 이번 주 계획(리뷰) + 열린 과제
-  let rev=null,tasks=[];
-  try{const {data}=await sb.from('weekly_reviews').select('top_priority,plan_text').eq('unit_id',u).eq('iso_week',THISWEEK).order('submitted_at',{ascending:false}).limit(1);rev=data&&data[0];}catch(_){}
-  try{const {data}=await sb.from('tasks').select('title,due_date,assignee_name,status').eq('unit_id',u).eq('period_key',THISWEEK).neq('status','done').neq('status','dropped');tasks=data||[];}catch(_){}
-  const open=tasks.slice().sort((a,b)=>((a.due_date||'9999')<(b.due_date||'9999')?-1:1));
-  // 페이스
+  let rev=null;
+  try{const {data}=await sb.from('weekly_reviews').select('top_priority').eq('unit_id',u).eq('iso_week',THISWEEK).order('submitted_at',{ascending:false}).limit(1);rev=data&&data[0];}catch(_){}
   const di=(new Date(dateStr+'T00:00:00').getDay()+6)%7;const daysLeft=7-di;
   const remain=(sum&&sum.target!=null)?Math.max(0,sum.target-sum.sumS):null;
   const perDay=(remain&&daysLeft>0)?Math.round(remain/daysLeft):null;
-  // 오늘 할 것
-  let act='',lead='오늘 할 것';
-  const due=open.find(t=>t.due_date&&t.due_date<=dateStr);
-  if(due){act=due.title;lead='오늘 마감';}
-  else if(open[0]){const d=open[0].due_date?daysUntil(dateStr,open[0].due_date):null;act=open[0].title+(d!=null?(d===0?' (오늘까지)':' (D-'+d+')'):'');}
-  else if(rev&&rev.top_priority){act=rev.top_priority;lead='이번 주 최우선';}
-  let h='<div class="dyplan"><div class="dyplan-k">'+lead+'</div>';
-  h+='<div class="dyplan-act">'+(act?esc(act):'이번 주 계획을 세워보세요 — 주간 입력 탭에서 최우선·과제를 정하면 여기 떠요.')+'</div>';
+  const goal=rev&&rev.top_priority;
+  if(!goal&&!perDay){el.innerHTML='';return;}
+  let h='<div class="dyplan"><div class="dyplan-k">이번 주 목표</div>';
+  h+='<div class="dyplan-act">'+(goal?esc(goal):'주간 입력 탭에서 이번 주 목표를 정하면 여기 떠요.')+'</div>';
   if(perDay)h+='<div class="dyplan-pace">매출 페이스: 오늘 '+wonShort(perDay)+'원이면 목표 궤도 유지</div>';
-  // 이번 주 계획 리마인드
-  if((rev&&rev.top_priority)||open.length){
-    h+='<div class="dyplan-wk"><div class="dyplan-wt">이번 주 계획</div>';
-    if(rev&&rev.top_priority)h+='<div class="dyplan-pri"><span>최우선</span>'+esc(rev.top_priority)+'</div>';
-    open.slice(0,4).forEach(t=>{const d=t.due_date?daysUntil(dateStr,t.due_date):null;const dd=d!=null?(d<0?'<span class="dd over">지남</span>':d===0?'<span class="dd over">오늘</span>':'<span class="dd">D-'+d+'</span>'):'';h+='<div class="dyplan-tk">'+dd+'<span>'+esc(t.title)+(t.assignee_name?' · '+esc(t.assignee_name):'')+'</span></div>';});
-    h+='</div>';
-  }
   el.innerHTML=h+'</div>';
 }
 async function renderDayWeek(u,dateStr){
@@ -1175,6 +1172,40 @@ async function renderDailyCoach(uid,date){
   }catch(e){el.innerHTML='<div class="coach-err">코칭 호출 실패: '+esc(e.message||e)+'</div>';}
 }
 async function refreshDailyCoach(btn){var uid=btn.getAttribute('data-uid'),date=btn.getAttribute('data-date');var el=$('coach-'+uid);if(el)el.innerHTML='<div class="coach-load">오늘의 코칭 다시 생성 중…</div>';try{await sb.from('coachings').delete().eq('unit_id','@daily:'+uid).eq('iso_week',date);}catch(e){}renderDailyCoach(uid,date);}
+function setupWizard(){
+  var view=document.getElementById('view-input');if(!view)return;
+  if(view.getAttribute('data-winit')){wshow(window.__wi||0);return;}
+  view.setAttribute('data-winit','1');
+  var cards=[].slice.call(view.querySelectorAll('.fcard'));
+  var steps=cards.slice(1);
+  steps.forEach(function(c){c.classList.add('wstep');});
+  window.__wsteps=steps;window.__wi=0;
+  window.__wtitles=steps.map(function(c){var ft=c.querySelector('.ft');if(!ft)return '';var t=ft.cloneNode(true);[].slice.call(t.querySelectorAll('span')).forEach(function(s){s.remove();});return t.textContent.trim();});
+  var nav=document.createElement('div');nav.className='wnav';nav.id='wnav';
+  nav.innerHTML='<div class="wprog"><div class="wprog-bar"><i id="wprogi"></i></div><span id="wprogt"></span></div><div class="wbtns"><button type="button" class="wbtn wprev" id="wprev" onclick="wgo(-1)">이전</button><button type="button" class="wbtn wnext" id="wnext" onclick="wgo(1)">다음</button></div>';
+  var sub=document.getElementById('submitBtn');if(sub){sub.style.display='none';sub.parentNode.insertBefore(nav,sub);}
+  wshow(0);
+}
+function wshow(i){
+  var steps=window.__wsteps||[];if(!steps.length)return;
+  i=Math.max(0,Math.min(steps.length-1,i));window.__wi=i;
+  steps.forEach(function(c,idx){c.style.display=(idx===i)?'':'none';});
+  var pi=document.getElementById('wprogi');if(pi)pi.style.width=Math.round((i+1)/steps.length*100)+'%';
+  var pt=document.getElementById('wprogt');if(pt)pt.textContent=(i+1)+' / '+steps.length+(window.__wtitles[i]?(' · '+window.__wtitles[i]):'');
+  var prev=document.getElementById('wprev');if(prev)prev.style.visibility=(i===0)?'hidden':'visible';
+  var next=document.getElementById('wnext');if(next)next.textContent=(i===steps.length-1)?'저장하기':'다음';
+  try{document.getElementById('view-input').scrollIntoView({block:'start',behavior:'smooth'});}catch(e){}
+}
+function wgo(d){
+  var steps=window.__wsteps||[];var i=window.__wi||0;
+  if(d>0&&i===steps.length-1){
+    var tp=document.getElementById('top_priority');
+    if(tp&&!tp.value.trim()){var si=-1;steps.forEach(function(c,idx){if(c.contains(tp))si=idx;});if(si>=0)wshow(si);fmsg('"이번 주 목표"는 필수예요.','err');return;}
+    var sub=document.getElementById('submitBtn');if(sub&&sub.onclick)sub.onclick();
+    return;
+  }
+  wshow(i+d);
+}
 function fmsg(t,k){const e=$('fmsg');e.className='fmsg'+(k?(' '+k):'');e.textContent=t||'';}
 
 $('submitBtn').onclick=async()=>{
