@@ -498,6 +498,23 @@ body.previewing #pvBanner a{color:#fff;text-decoration:underline;cursor:pointer;
 .wprev{background:var(--surface);color:var(--ink2);border:1px solid var(--line)}
 .wnext{background:var(--grad);color:#fff;border:none}
 </style>
+<style id="u17">
+.log-wk{font-size:13px;font-weight:750;color:var(--ink);margin:22px 0 11px;display:flex;align-items:baseline;gap:8px}
+.log-wkc{font-size:11.5px;font-weight:600;color:var(--ink3)}
+.logcard{background:var(--surface);border:1px solid var(--line);border-radius:15px;box-shadow:var(--card-sh);margin-bottom:10px;overflow:hidden}
+.logcard>summary{list-style:none;cursor:pointer;padding:15px 16px;display:flex;align-items:center;gap:12px}
+.logcard>summary::-webkit-details-marker{display:none}
+.lg-sum{flex:1;min-width:0}
+.lg-who{font-size:12px;font-weight:700;color:var(--accent-2);margin-bottom:4px}
+.lg-top{font-size:14.5px;font-weight:650;color:var(--ink);line-height:1.4;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.lg-chev{width:18px;height:18px;fill:none;stroke:var(--ink3);stroke-width:2;flex-shrink:0;transition:transform .3s ease}
+.logcard[open] .lg-chev{transform:rotate(180deg)}
+.lg-body{padding:2px 16px 16px;border-top:1px solid var(--line)}
+.lg-row{display:flex;gap:12px;padding:11px 0;border-bottom:1px solid var(--line2,var(--line))}
+.lg-row:last-child{border-bottom:0}
+.lg-k{width:96px;flex-shrink:0;font-size:12px;font-weight:700;color:var(--ink3)}
+.lg-v{flex:1;min-width:0;font-size:13.5px;color:var(--ink);line-height:1.55;white-space:pre-wrap;word-break:break-word}
+</style>
 </head>
 <body>
   <div class="authwrap" id="auth">
@@ -632,6 +649,11 @@ body.previewing #pvBanner a{color:#fff;text-decoration:underline;cursor:pointer;
         <div class="saved" id="saved"></div>
       </div>
 
+      <div class="view" id="view-log">
+        <div class="hero"><div class="eyebrow" id="logEyebrow">기록</div><h1>주간 답변</h1><p class="sub" id="logSub">제출된 주간 리뷰를 주차별로 열람해요.</p></div>
+        <div id="logBody"></div>
+      </div>
+
       <div class="foot">BY OS · Supabase 실시간 연결 · 로그인 + 풀버전 주간 입력<br>다음 단계: 추이·달성률 대시보드 · AI 코칭</div>
     </div>
   </div>
@@ -662,7 +684,7 @@ $('authBtn').onclick=async()=>{const email=$('email').value.trim(),password=$('p
 $('logoutBtn').onclick=async()=>{await sb.auth.signOut();};
 function tr(m){if(/Invalid login/i.test(m))return '이메일 또는 비밀번호가 맞지 않아요.';if(/already registered/i.test(m))return '이미 가입된 이메일이에요. 로그인해주세요.';return m;}
 
-function setView(v){CURVIEW=v;['daily','home','dash','input'].forEach(x=>{var el=$('view-'+x);if(el)el.classList.toggle('on',v===x);});[].slice.call(document.querySelectorAll('#tabbar .tab')).forEach(function(b){b.classList.toggle('on',b.getAttribute('data-view')===v);});window.scrollTo({top:0,behavior:'smooth'});if(v==='dash')renderDash();if(v==='daily')renderDaily();if(v==='home')renderHome();if(v==='input')setupWizard();}
+function setView(v){CURVIEW=v;['daily','home','dash','input','log'].forEach(x=>{var el=$('view-'+x);if(el)el.classList.toggle('on',v===x);});[].slice.call(document.querySelectorAll('#tabbar .tab')).forEach(function(b){b.classList.toggle('on',b.getAttribute('data-view')===v);});window.scrollTo({top:0,behavior:'smooth'});if(v==='dash')renderDash();if(v==='daily')renderDaily();if(v==='home')renderHome();if(v==='input')setupWizard();if(v==='log')renderLog();}
 
 sb.auth.onAuthStateChange((_e,s)=>render(s));
 async function render(session){SESSION=session;if(session){if(window.__rf===session.user.id)return;window.__rf=session.user.id;$('auth').style.display='none';$('app').style.display='block';$('uemail').textContent=session.user.email;$('authBtn').disabled=false;$('weekLabel').textContent=wkLabel(THISWEEK)+' 입력';await loadData();ROLE=(USERS.find(u=>u.id===session.user.id)||{}).role||'partner';buildTabs(effRole());var _pb=document.getElementById('previewBtn');if(_pb)_pb.style.display=realAdmin()?'':'none';setTopdate();applyThemeIcon();renderHome();buildUnitSelect();buildDailyUnitSelect();buildDashTarget();buildDashTabs();await onUnitChange();if(!window.__booted){window.__booted=true;setView('home');}}else{window.__booted=false;window.__rf=null;$('app').style.display='none';$('auth').style.display='flex';}}
@@ -1206,6 +1228,46 @@ function wgo(d){
   }
   wshow(i+d);
 }
+async function renderLog(){
+  var el=$('logBody');if(!el||!SESSION)return;
+  var admin=isAdmin();
+  var eb=$('logEyebrow'),sb2=$('logSub');
+  if(eb)eb.textContent=admin?'전체 담당자':'내 기록';
+  if(sb2)sb2.textContent=admin?'모든 담당자가 제출한 주간 답변을 주차별로 열람해요.':'내가 제출한 주간 리뷰를 모아봐요.';
+  el.innerHTML='<div class="empty">불러오는 중…</div>';
+  try{
+    var q=sb.from('weekly_reviews').select('*').order('iso_week',{ascending:false}).order('submitted_at',{ascending:false});
+    if(!admin)q=q.eq('user_id',SESSION.user.id);
+    var res=await q;var revs=res.data||[];
+    if(!revs.length){el.innerHTML='<div class="empty">'+(admin?'아직 제출된 주간 답변이 없어요.':'아직 작성한 주간 리뷰가 없어요. 주간 탭에서 작성하면 여기 쌓여요.')+'</div>';return;}
+    var byWk={};revs.forEach(function(r){(byWk[r.iso_week]=byWk[r.iso_week]||[]).push(r);});
+    var wks=Object.keys(byWk).sort().reverse();
+    var out='';
+    wks.forEach(function(wk){
+      out+='<div class="log-wk">'+esc(wkLabel(wk))+' <span class="log-wkc">'+esc(wk)+' · '+byWk[wk].length+'건</span></div>';
+      byWk[wk].forEach(function(r){out+=reviewCard(r,admin);});
+    });
+    el.innerHTML=out;
+  }catch(e){el.innerHTML='<div class="err">불러오기 실패: '+esc(e.message||e)+'</div>';}
+}
+function reviewCard(r,admin){
+  var pn=(USERS.find(function(u){return u.id===r.user_id;})||{}).name;
+  var who=uName(r.unit_id)+(admin&&pn?(' · '+pn):'');
+  var row=function(k,v){return (v&&String(v).trim())?'<div class="lg-row"><div class="lg-k">'+k+'</div><div class="lg-v">'+esc(v)+'</div></div>':'';};
+  var body='';
+  body+=row('이번 주 목표',r.top_priority);
+  body+=row('주간 실행 계획',r.plan_text);
+  body+=row('지난주 한 일',r.done_text);
+  body+=row('가장 잘한 것',r.result_comment);
+  body+=row('걸림돌',r.miss_reason);
+  body+=row('가장 걸리는 문제',r.biggest_problem);
+  body+=row('문제 원인',r.problem_cause);
+  body+=row('요청할 지원',r.support_text);
+  body+=row('결정 필요 안건',r.decision_text);
+  body+=row('팀에 위임한 일',r.delegation_text);
+  var sum='<div class="lg-sum"><div class="lg-who">'+esc(who)+'</div><div class="lg-top">'+esc(r.top_priority||'(목표 미기재)')+'</div></div><svg class="lg-chev" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg>';
+  return '<details class="logcard"><summary>'+sum+'</summary><div class="lg-body">'+(body||'<div class="empty">작성된 답변이 없어요.</div>')+'</div></details>';
+}
 function fmsg(t,k){const e=$('fmsg');e.className='fmsg'+(k?(' '+k):'');e.textContent=t||'';}
 
 $('submitBtn').onclick=async()=>{
@@ -1544,8 +1606,8 @@ function insCard(x){return '<div class="ins '+x.type+'"><div class="ic">'+esc(x.
 
 
 /* ===== 역할·탭·테마 ===== */
-const TABMETA={daily:{label:'오늘',icon:'sun'},home:{label:'홈',icon:'home'},dash:{label:'대시보드',icon:'chart'},input:{label:'주간',icon:'cal'}};
-function tabSvg(k){var p={sun:'<circle cx="12" cy="12" r="4"/><path d="M12 3.5v1.6M12 18.9v1.6M3.5 12h1.6M18.9 12h1.6M6 6l1.1 1.1M16.9 16.9 18 18M18 6l-1.1 1.1M7.1 16.9 6 18"/>',home:'<path d="M4.2 10.6 12 4.5l7.8 6.1"/><path d="M5.7 9.6V19.5h12.6V9.6"/><path d="M9.8 19.5v-4.6h4.4v4.6"/>',chart:'<path d="M4 20V4M4 20h16"/><rect x="7" y="11" width="3" height="6" rx="1"/><rect x="13" y="7" width="3" height="10" rx="1"/>',cal:'<rect x="3.8" y="5" width="16.4" height="15" rx="3.2"/><path d="M3.8 9.4h16.4M8.2 3v4M15.8 3v4"/>'};return '<svg viewBox="0 0 24 24">'+(p[k]||'')+'</svg>';}
+const TABMETA={daily:{label:'오늘',icon:'sun'},home:{label:'홈',icon:'home'},dash:{label:'대시보드',icon:'chart'},input:{label:'주간',icon:'cal'},log:{label:'기록',icon:'log'}};
+function tabSvg(k){var p={log:'<path d="M5.5 4h9l4 4v12h-13z"/><path d="M9 7h3M9 11h6M9 15h6"/>',sun:'<circle cx="12" cy="12" r="4"/><path d="M12 3.5v1.6M12 18.9v1.6M3.5 12h1.6M18.9 12h1.6M6 6l1.1 1.1M16.9 16.9 18 18M18 6l-1.1 1.1M7.1 16.9 6 18"/>',home:'<path d="M4.2 10.6 12 4.5l7.8 6.1"/><path d="M5.7 9.6V19.5h12.6V9.6"/><path d="M9.8 19.5v-4.6h4.4v4.6"/>',chart:'<path d="M4 20V4M4 20h16"/><rect x="7" y="11" width="3" height="6" rx="1"/><rect x="13" y="7" width="3" height="10" rx="1"/>',cal:'<rect x="3.8" y="5" width="16.4" height="15" rx="3.2"/><path d="M3.8 9.4h16.4M8.2 3v4M15.8 3v4"/>'};return '<svg viewBox="0 0 24 24">'+(p[k]||'')+'</svg>';}
 var PREVIEW=false;
 function realAdmin(){return ROLE==='owner'||ROLE==='manager';}
 function isAdmin(){return realAdmin()&&!PREVIEW;}
@@ -1561,7 +1623,7 @@ function togglePreview(){
   buildDashTarget();buildDashTabs();
   setView('home');
 }
-function buildTabs(role){var admin=(role==='owner'||role==='manager');var set=admin?['daily','home','dash','input']:['home','daily','dash','input'];var bar=$('tabbar');if(!bar)return;bar.innerHTML=set.map(function(v){return '<button class="tab" data-view="'+v+'" onclick="setView(\''+v+'\')">'+tabSvg(TABMETA[v].icon)+'<span>'+TABMETA[v].label+'</span></button>';}).join('');}
+function buildTabs(role){var admin=(role==='owner'||role==='manager');var set=admin?['daily','home','dash','input','log']:['home','daily','dash','input','log'];var bar=$('tabbar');if(!bar)return;bar.innerHTML=set.map(function(v){return '<button class="tab" data-view="'+v+'" onclick="setView(\''+v+'\')">'+tabSvg(TABMETA[v].icon)+'<span>'+TABMETA[v].label+'</span></button>';}).join('');}
 function setTopdate(){var d=new Date();var wd=['일','월','화','수','목','금','토'][d.getDay()];var el=$('topdate');if(el)el.textContent=wd+'요일 · '+(d.getMonth()+1)+'월 '+d.getDate()+'일';}
 function applyThemeIcon(){var i=$('themeIcon');if(!i)return;i.setAttribute('stroke','currentColor');i.setAttribute('stroke-width','1.7');i.setAttribute('fill','none');i.innerHTML=document.documentElement.classList.contains('dark')?'<circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5.1 5.1l1.6 1.6M17.3 17.3l1.6 1.6M18.9 5.1l-1.6 1.6M6.7 17.3l-1.6 1.6"/>':'<path d="M20 14.5A8 8 0 0 1 9.5 4 7 7 0 1 0 20 14.5Z"/>';}
 function toggleTheme(){document.documentElement.classList.toggle('dark');try{localStorage.setItem('byos-theme',document.documentElement.classList.contains('dark')?'dark':'light');}catch(e){}applyThemeIcon();}
