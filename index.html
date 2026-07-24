@@ -515,6 +515,14 @@ body.previewing #pvBanner a{color:#fff;text-decoration:underline;cursor:pointer;
 .lg-k{width:96px;flex-shrink:0;font-size:12px;font-weight:700;color:var(--ink3)}
 .lg-v{flex:1;min-width:0;font-size:13.5px;color:var(--ink);line-height:1.55;white-space:pre-wrap;word-break:break-word}
 </style>
+<style id="u18">
+.logfilter{display:flex;gap:9px;flex-wrap:wrap;margin-bottom:6px}
+.logf-g{display:flex;align-items:center;gap:7px;flex:1;min-width:140px}
+.logf-g .dlbl{flex-shrink:0}
+.logf-g select{flex:1;min-width:0}
+.log-count{font-size:12px;color:var(--ink3);font-weight:600;margin:6px 0 2px}
+@media(max-width:520px){.logf-g{min-width:100%}}
+</style>
 </head>
 <body>
   <div class="authwrap" id="auth">
@@ -651,7 +659,7 @@ body.previewing #pvBanner a{color:#fff;text-decoration:underline;cursor:pointer;
 
       <div class="view" id="view-log">
         <div class="hero"><div class="eyebrow" id="logEyebrow">기록</div><h1>주간 답변</h1><p class="sub" id="logSub">제출된 주간 리뷰를 주차별로 열람해요.</p></div>
-        <div id="logBody"></div>
+        <div id="logFilter" class="logfilter"></div><div id="logBody"></div>
       </div>
 
       <div class="foot">BY OS · Supabase 실시간 연결 · 로그인 + 풀버전 주간 입력<br>다음 단계: 추이·달성률 대시보드 · AI 코칭</div>
@@ -1233,22 +1241,54 @@ async function renderLog(){
   var admin=isAdmin();
   var eb=$('logEyebrow'),sb2=$('logSub');
   if(eb)eb.textContent=admin?'전체 담당자':'내 기록';
-  if(sb2)sb2.textContent=admin?'모든 담당자가 제출한 주간 답변을 주차별로 열람해요.':'내가 제출한 주간 리뷰를 모아봐요.';
+  if(sb2)sb2.textContent=admin?'모든 담당자가 제출한 주간 답변을 열람해요. 주차·매장·담당자로 필터하세요.':'내가 제출한 주간 리뷰를 모아봐요.';
   el.innerHTML='<div class="empty">불러오는 중…</div>';
   try{
     var q=sb.from('weekly_reviews').select('*').order('iso_week',{ascending:false}).order('submitted_at',{ascending:false});
     if(!admin)q=q.eq('user_id',SESSION.user.id);
-    var res=await q;var revs=res.data||[];
-    if(!revs.length){el.innerHTML='<div class="empty">'+(admin?'아직 제출된 주간 답변이 없어요.':'아직 작성한 주간 리뷰가 없어요. 주간 탭에서 작성하면 여기 쌓여요.')+'</div>';return;}
-    var byWk={};revs.forEach(function(r){(byWk[r.iso_week]=byWk[r.iso_week]||[]).push(r);});
-    var wks=Object.keys(byWk).sort().reverse();
-    var out='';
-    wks.forEach(function(wk){
-      out+='<div class="log-wk">'+esc(wkLabel(wk))+' <span class="log-wkc">'+esc(wk)+' · '+byWk[wk].length+'건</span></div>';
-      byWk[wk].forEach(function(r){out+=reviewCard(r,admin);});
-    });
-    el.innerHTML=out;
+    var res=await q;window.__logrevs=res.data||[];window.__logadmin=admin;
+    buildLogFilters();renderLogList();
   }catch(e){el.innerHTML='<div class="err">불러오기 실패: '+esc(e.message||e)+'</div>';}
+}
+function buildLogFilters(){
+  var fc=$('logFilter');if(!fc)return;
+  var revs=window.__logrevs||[],admin=window.__logadmin;
+  if(!revs.length){fc.innerHTML='';return;}
+  var weeks=[...new Set(revs.map(function(r){return r.iso_week;}))].sort().reverse();
+  var units=[...new Set(revs.map(function(r){return r.unit_id;}))];
+  var people=[...new Set(revs.map(function(r){return r.user_id;}))];
+  var cw=window.__lf_week||'ALL',cu=window.__lf_unit||'ALL',cp=window.__lf_person||'ALL';
+  var sel=function(v){return v===cw||v===cu||v===cp?' selected':'';};
+  function grp(lbl,id,cur,opts){
+    var o='<option value="ALL"'+(cur==='ALL'?' selected':'')+'>전체</option>'+opts.map(function(x){return '<option value="'+esc(x.v)+'"'+(x.v===cur?' selected':'')+'>'+esc(x.t)+'</option>';}).join('');
+    return '<div class="logf-g"><span class="dlbl">'+lbl+'</span><select id="'+id+'" onchange="pickLog()">'+o+'</select></div>';
+  }
+  var h=grp('주차','lfWeek',cw,weeks.map(function(w){return {v:w,t:wkLabel(w)};}));
+  h+=grp('매장','lfUnit',cu,units.map(function(u){return {v:u,t:uName(u)};}));
+  if(admin)h+=grp('담당자','lfPerson',cp,people.map(function(p){return {v:p,t:((USERS.find(function(u){return u.id===p;})||{}).name||p)};}));
+  fc.innerHTML=h;
+}
+function pickLog(){
+  window.__lf_week=($('lfWeek')||{}).value||'ALL';
+  window.__lf_unit=($('lfUnit')||{}).value||'ALL';
+  window.__lf_person=($('lfPerson')||{}).value||'ALL';
+  renderLogList();
+}
+function renderLogList(){
+  var el=$('logBody');if(!el)return;
+  var revs=window.__logrevs||[],admin=window.__logadmin;
+  if(!revs.length){el.innerHTML='<div class="empty">'+(admin?'아직 제출된 주간 답변이 없어요.':'아직 작성한 주간 리뷰가 없어요. 주간 탭에서 작성하면 여기 쌓여요.')+'</div>';return;}
+  var w=window.__lf_week||'ALL',u=window.__lf_unit||'ALL',p=window.__lf_person||'ALL';
+  var fl=revs.filter(function(r){return (w==='ALL'||r.iso_week===w)&&(u==='ALL'||r.unit_id===u)&&(p==='ALL'||r.user_id===p);});
+  if(!fl.length){el.innerHTML='<div class="empty">조건에 맞는 답변이 없어요.</div>';return;}
+  var byWk={};fl.forEach(function(r){(byWk[r.iso_week]=byWk[r.iso_week]||[]).push(r);});
+  var wks=Object.keys(byWk).sort().reverse();
+  var out='<div class="log-count">'+fl.length+'건</div>';
+  wks.forEach(function(wk){
+    out+='<div class="log-wk">'+esc(wkLabel(wk))+' <span class="log-wkc">'+esc(wk)+' · '+byWk[wk].length+'건</span></div>';
+    byWk[wk].forEach(function(r){out+=reviewCard(r,admin);});
+  });
+  el.innerHTML=out;
 }
 function reviewCard(r,admin){
   var pn=(USERS.find(function(u){return u.id===r.user_id;})||{}).name;
